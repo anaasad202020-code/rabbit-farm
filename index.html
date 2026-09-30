@@ -172,7 +172,7 @@ function setV(){const ts=Object.keys(S.ch).map(t=>[t,rows(t).length]);const kb=M
 const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وعلى حسابك.':cur==='busy'?'جارٍ الحفظ…':cur==='loc'?'كل البيانات محفوظة على جهازك وتشتغل بدون إنترنت. خد نسخة احتياطية كل فترة وابعتها لنفسك.':'تعذّر الحفظ — نزّل نسخة احتياطية الآن.';
 return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
 <div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>
-${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button>`}
+${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button>`}
 function render(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
 $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
 const t=curT();let h=SUBS[tab]?`<div class="seg">${SUBS[tab].map(([k,l])=>`<button data-sub="${k}" class="${sub[tab]===k?'on':''}">${l}</button>`).join('')}</div>`:'';
@@ -241,7 +241,12 @@ if(r===1)toast('تم تجهيز النسخة الاحتياطية ✓');else if(
 let pend=null;
 function pickFile(f){const rd=new FileReader();rd.onload=()=>{try{pend=importCheck(JSON.parse(rd.result));$('#rsi').innerHTML=`<div class="warn">سيتم استبدال كل البيانات الحالية بـ ${pend.total} سجل من الملف.</div><button class="btn d" data-act="rs">تأكيد الاستبدال</button>`}catch(e){pend=null;$('#rsi').innerHTML=`<div class="er">${esc(e.message||'ملف غير صالح')}</div>`}};rd.onerror=()=>{$('#rsi').innerHTML='<div class="er">تعذّرت قراءة الملف</div>'};rd.readAsText(f)}
 function doRestore(){if(!pend)return;const d=pend;pend=null;S.cfg=d.cfg;for(const t in S.ch){const old=S.ch[t].length;S.ch[t]=pack(d.t[t]);for(let i=0;i<Math.max(old,S.ch[t].length);i++)qd(t,i)}qc();S.v++;toast('تم الاسترجاع ✓');render()}
-function doAct(a,el){if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();
+function saveAllCfg(){const nc={...S.cfg};
+for(const el of document.querySelectorAll('[data-cfg]')){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
+if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&/Days$|Age$|Cycle$/.test(k)&&v<1)){const f=CFGL.find(x=>x[0]===k);toast('قيمة غير صالحة: '+(f?f[1]:k));return}nc[k]=pct?v/100:v}
+if(nc.PoorRatePct>nc.GoodRatePct){toast('نسبة الضعيف لازم تكون أقل من الممتاز');return}
+S.cfg=nc;qc();S.v++;toast('تم حفظ الإعدادات ✓');render()}
+function doAct(a,el){if(a==='svc')return saveAllCfg();if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();
 if(a==='bk')return doBackup();
 if(a==='rs')return doRestore();
 if(a==='pull'){if(!remote){toast('المزامنة مع الحساب غير متاحة الآن');return}setSt('busy');return pull().then(push).then(()=>toast('تمت المزامنة')).catch(netErr)}
@@ -253,7 +258,7 @@ const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='set'&&!FS)render()});addEventListener('appinstalled',()=>{dip=null});
 function notifV(){const p=NP(),ios=/iphone|ipad/i.test(navigator.userAgent);
 const st=p==='granted'?'✅ إشعارات الجوال مفعّلة':p==='denied'?'⛔ الإشعارات مرفوضة — فعّلها من إعدادات الجوال':'🔕 الإشعارات غير مفعّلة';
-return `<h3>التنبيهات على الجوال</h3><div class="cd"><b>${st}</b><div class="mu">${ios&&!standalone()?'على الآيفون: ثبّت التطبيق الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة عشان الإشعارات تشتغل.':'بيوصلك إشعار بالمواعيد العاجلة لما تفتح التطبيق، وكمان كل يوم تلقائيًا على أندرويد.'}</div></div><div class="acts"><button class="btn" data-act="nf">تفعيل الإشعارات</button><button class="btn s" data-act="nt">إشعار تجريبي</button></div>
+return `<h3>التنبيهات على الجوال</h3><div class="cd"><b>${st}</b><div class="mu">${ios&&!standalone()?'على الآيفون: ثبّت التطبيق الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة عشان الإشعارات تشتغل.':'بيوصلك إشعار بالمواعيد العاجلة لما تفتح التطبيق، وكمان كل يوم تلقائيًا على أندرويد.<br>لتغيير نغمة الإشعار: إعدادات الجوال ← التطبيقات ← مزرعة الأرانب ← الإشعارات ← الصوت.'}</div></div><div class="acts"><button class="btn" data-act="nf">تفعيل الإشعارات</button><button class="btn s" data-act="nt">إشعار تجريبي</button></div>
 <div class="cd"><b>📅 منبهات تشتغل والتطبيق مقفول</b><div class="mu">ضيف مواعيد الجسات والولادة والفطام والتحصينات (لـ 45 يوم جاي) لتقويم الجوال، فيرن عليك المنبه الساعة 9 الصبح على أندرويد وآيفون. كرّرها كل شهر أو بعد تسجيل تلقيحات جديدة.</div></div><div class="acts"><button class="btn" data-act="ics">إضافة المواعيد للتقويم</button></div>
 <div class="acts"><button class="btn s" data-act="shr">مشاركة التطبيق</button>${dip?'<button class="btn s" data-act="ins">تثبيت التطبيق</button>':''}</div>`}
 async function installApp(){if(!dip)return;dip.prompt();await dip.userChoice.catch(()=>0);dip=null;render()}
@@ -264,7 +269,7 @@ try{const p=await Notification.requestPermission();if(p==='granted'){reg2();noti
 async function notifyDue(force){if(NP()!=='granted'){if(force)toast('فعّل الإشعارات أولًا');return}
 const body=Core.dueText(alerts(view(),S.cfg,T0()));if(!body&&!force)return;
 if(!force){try{if(localStorage.rf_nd===todayS())return;localStorage.rf_nd=todayS()}catch(e){}}
-const o={body:body||'مفيش حالات عاجلة النهاردة ✓',tag:'rf-daily',icon:'icon-192.png',badge:'icon-192.png',lang:'ar',dir:'rtl'};
+const o={body:body||'مفيش حالات عاجلة النهاردة ✓',tag:'rf-daily',icon:'icon-192.png',badge:'badge-96.png',vibrate:[200,100,200],lang:'ar',dir:'rtl'};
 try{const r=await navigator.serviceWorker.ready;await r.showNotification('🐇 مزرعة الأرانب',o)}catch(e){try{new Notification('🐇 مزرعة الأرانب',o)}catch(_){}}}
 async function exportIcs(){const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',Core.ics(view(),S.cfg,T0()),'مواعيد مزرعة الأرانب');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
 
@@ -283,7 +288,7 @@ if(d.vac)return quickVac(d.vac);
 if(d.act)return doAct(d.act,el)});
 let qt=0;
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
-document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg)saveCfg(t);else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)return;notifyDue();if(!FS)render();if(remote&&!pushing)pull().then(push).catch(netErr)});
 addEventListener('online',()=>{if(remote)pull().then(push).catch(netErr)});
 window.RF={S,put,go,render,openForm,save,rows,fillList};

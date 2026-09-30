@@ -1,5 +1,5 @@
 importScripts('core.js');
-const V='rf-v1',FILES=['./','index.html','core.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'];
+const V='rf-v2',FILES=['./','index.html','core.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','badge-96.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!=='rf-fonts').map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET')return;
@@ -9,6 +9,6 @@ function docs(){return new Promise((ok,no)=>{const q=indexedDB.open('rabbitfarm'
 async function check(){const L=(await docs()).sort((a,b)=>(a.n||0)-(b.n||0)),S={does:[],bucks:[],br:[]};let c={...Core.DEF};
 for(const d of L){if(d.id==='cfg')c={...Core.DEF,...d.cfg};else if(S[d.k]&&Array.isArray(d.rows))S[d.k]=S[d.k].concat(d.rows)}
 const t=Core.dueText(Core.alerts(S,c,Core.D(Core.todayS())));if(!t)return;
-return self.registration.showNotification('🐇 مزرعة الأرانب',{body:t,tag:'rf-daily',icon:'icon-192.png',badge:'icon-192.png',lang:'ar',dir:'rtl'})}
+return self.registration.showNotification('🐇 مزرعة الأرانب',{body:t,tag:'rf-daily',icon:'icon-192.png',badge:'badge-96.png',vibrate:[200,100,200],lang:'ar',dir:'rtl'})}
 self.addEventListener('periodicsync',e=>{if(e.tag==='rf-daily')e.waitUntil(check().catch(()=>0))});
 self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>l.length?l[0].focus():clients.openWindow('./')))});
