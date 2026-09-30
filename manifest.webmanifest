@@ -1,7 +1,7 @@
 {
-  "name": "مزرعة الأرانب",
-  "short_name": "مزرعة الأرانب",
-  "description": "تطبيق متابعة مزرعة الأرانب: التناسل والتحصينات والحسابات",
+  "name": "Rabbit Farm",
+  "short_name": "Rabbit Farm",
+  "description": "تطبيق متابعة المزرعة: التناسل والتحصينات والحسابات",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./index.html",

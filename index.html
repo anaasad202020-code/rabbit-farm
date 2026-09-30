@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0c6a53"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="مزرعة الأرانب">
-<title>مزرعة الأرانب</title>
+<meta name="theme-color" content="#0c6a53"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Rabbit Farm">
+<title>Rabbit Farm</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
 <style>
 :root{--bg:#f0f4f1;--sf:#fff;--ink:#14241c;--mu:#5f7066;--ln:#d9e2dc;--pr:#0c6a53;--pt:#fff;--rc:#b42626;--rb:#fbe8e8;--yc:#8f6100;--yb:#fcf1cf;--gc:#1f7a3f;--gb:#e1f3e7;--bc:#1f5f9f;--bb:#e3edf9;--oc:#b4520f;--ob:#fdebdc;--nc:#56646b;--nb:#e9eeeb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -94,7 +94,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='6';
+const VER='8';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -267,7 +267,7 @@ async function shareFile(name,mime,text,title){const f=new File([text],name,{typ
 try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title});return 1}}catch(e){if(e&&e.name==='AbortError')return 2}
 try{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4e4);return 1}catch(e){return 0}}
 async function doBackup(){const s=JSON.stringify({v:1,at:new Date().toISOString(),cfg:S.cfg,t:Object.fromEntries(Object.keys(S.ch).map(t=>[t,rows(t)]))});
-const r=await shareFile('rabbit-farm-backup-'+todayS()+'.json','application/json',s,'نسخة احتياطية - مزرعة الأرانب');
+const r=await shareFile('rabbit-farm-backup-'+todayS()+'.json','application/json',s,'نسخة احتياطية - Rabbit Farm');
 if(r===1)toast('تم تجهيز النسخة الاحتياطية ✓');else if(r===0)toast('تعذّر تصدير النسخة')}
 let pend=null;
 function pickFile(f){const rd=new FileReader();rd.onload=()=>{try{pend=importCheck(JSON.parse(rd.result));$('#rsi').innerHTML=`<div class="warn">سيتم استبدال كل البيانات الحالية بـ ${pend.total} سجل من الملف.</div><button class="btn d" data-act="rs">تأكيد الاستبدال</button>`}catch(e){pend=null;$('#rsi').innerHTML=`<div class="er">${esc(e.message||'ملف غير صالح')}</div>`}};rd.onerror=()=>{$('#rsi').innerHTML='<div class="er">تعذّرت قراءة الملف</div>'};rd.readAsText(f)}
@@ -290,11 +290,11 @@ const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='set'&&!FS)render()});addEventListener('appinstalled',()=>{dip=null});
 function notifV(){const p=NP(),ios=/iphone|ipad/i.test(navigator.userAgent);
 const st=p==='granted'?'✅ إشعارات الجوال مفعّلة':p==='denied'?'⛔ الإشعارات مرفوضة — فعّلها من إعدادات الجوال':'🔕 الإشعارات غير مفعّلة';
-return `<h3>التنبيهات على الجوال</h3><div class="cd"><b>${st}</b><div class="mu">${ios&&!standalone()?'على الآيفون: ثبّت التطبيق الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة عشان الإشعارات تشتغل.':'بيوصلك إشعار بالمواعيد العاجلة لما تفتح التطبيق، وكمان كل يوم تلقائيًا على أندرويد.<br>لتغيير نغمة الإشعار: إعدادات الجوال ← التطبيقات ← مزرعة الأرانب ← الإشعارات ← الصوت.'}</div></div><div class="acts"><button class="btn" data-act="nf">تفعيل الإشعارات</button><button class="btn s" data-act="nt">إشعار تجريبي</button></div>
+return `<h3>التنبيهات على الجوال</h3><div class="cd"><b>${st}</b><div class="mu">${ios&&!standalone()?'على الآيفون: ثبّت التطبيق الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة عشان الإشعارات تشتغل.':'بيوصلك إشعار بالمواعيد العاجلة لما تفتح التطبيق، وكمان كل يوم تلقائيًا على أندرويد.<br>لتغيير نغمة الإشعار: إعدادات الجوال ← التطبيقات ← Rabbit Farm ← الإشعارات ← الصوت.'}</div></div><div class="acts"><button class="btn" data-act="nf">تفعيل الإشعارات</button><button class="btn s" data-act="nt">إشعار تجريبي</button></div>
 <div class="cd"><b>📅 منبهات تشتغل والتطبيق مقفول</b><div class="mu">ضيف مواعيد الجسات والولادة والفطام والتحصينات (لـ 45 يوم جاي) لتقويم الجوال، فيرن عليك المنبه الساعة 9 الصبح على أندرويد وآيفون. كرّرها كل شهر أو بعد تسجيل تلقيحات جديدة.</div></div><div class="acts"><button class="btn" data-act="ics">إضافة المواعيد للتقويم</button></div>
 <div class="acts"><button class="btn s" data-act="shr">مشاركة التطبيق</button>${dip?'<button class="btn s" data-act="ins">تثبيت التطبيق</button>':''}</div>`}
 async function installApp(){if(!dip)return;dip.prompt();await dip.userChoice.catch(()=>0);dip=null;render()}
-async function shareApp(){const u=location.href.split('#')[0];try{if(navigator.share)await navigator.share({title:'مزرعة الأرانب',text:'تطبيق متابعة مزرعة الأرانب',url:u});else{await navigator.clipboard.writeText(u);toast('اتنسخ رابط التطبيق')}}catch(e){}}
+async function shareApp(){const u=location.href.split('#')[0];try{if(navigator.share)await navigator.share({title:'Rabbit Farm',text:'تطبيق متابعة المزرعة',url:u});else{await navigator.clipboard.writeText(u);toast('اتنسخ رابط التطبيق')}}catch(e){}}
 async function reg2(){try{const r=await navigator.serviceWorker.ready;if(r.periodicSync)await r.periodicSync.register('rf-daily',{minInterval:12*36e5})}catch(e){}}
 async function enableNotif(){if(!('Notification' in window)){toast('المتصفح ده مش بيدعم الإشعارات');return}
 try{const p=await Notification.requestPermission();if(p==='granted'){reg2();notifyDue(1)}else toast('لم يتم السماح بالإشعارات')}catch(e){toast('تعذّر تفعيل الإشعارات')}render()}
@@ -302,8 +302,8 @@ async function notifyDue(force){if(NP()!=='granted'){if(force)toast('فعّل ا
 const body=Core.dueText(alerts(view(),S.cfg,T0()));if(!body&&!force)return;
 if(!force){try{if(localStorage.rf_nd===todayS())return;localStorage.rf_nd=todayS()}catch(e){}}
 const o={body:body||'مفيش حالات عاجلة النهاردة ✓',tag:'rf-daily',icon:'icon-192.png',badge:'badge-96.png',vibrate:[200,100,200],lang:'ar',dir:'rtl'};
-try{const r=await navigator.serviceWorker.ready;await r.showNotification('🐇 مزرعة الأرانب',o)}catch(e){try{new Notification('🐇 مزرعة الأرانب',o)}catch(_){}}}
-async function exportIcs(){const ics=Core.ics(view(),S.cfg,T0());if(!ics){toast('مفيش مواعيد خلال الـ 45 يوم الجاية');return}const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',ics,'مواعيد مزرعة الأرانب');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
+try{const r=await navigator.serviceWorker.ready;await r.showNotification('🐇 Rabbit Farm',o)}catch(e){try{new Notification('🐇 Rabbit Farm',o)}catch(_){}}}
+async function exportIcs(){const ics=Core.ics(view(),S.cfg,T0());if(!ics){toast('مفيش مواعيد خلال الـ 45 يوم الجاية');return}const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',ics,'مواعيد Rabbit Farm');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const el=e.target.closest('[data-open],[data-add],[data-sub],[data-more],[data-vac],[data-go],[data-tab],[data-act],#shx,#sv,#dl,#sheet');if(!el)return;const d=el.dataset;
