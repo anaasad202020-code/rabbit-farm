@@ -271,7 +271,7 @@ const body=Core.dueText(alerts(view(),S.cfg,T0()));if(!body&&!force)return;
 if(!force){try{if(localStorage.rf_nd===todayS())return;localStorage.rf_nd=todayS()}catch(e){}}
 const o={body:body||'مفيش حالات عاجلة النهاردة ✓',tag:'rf-daily',icon:'icon-192.png',badge:'badge-96.png',vibrate:[200,100,200],lang:'ar',dir:'rtl'};
 try{const r=await navigator.serviceWorker.ready;await r.showNotification('🐇 مزرعة الأرانب',o)}catch(e){try{new Notification('🐇 مزرعة الأرانب',o)}catch(_){}}}
-async function exportIcs(){const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',Core.ics(view(),S.cfg,T0()),'مواعيد مزرعة الأرانب');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
+async function exportIcs(){const ics=Core.ics(view(),S.cfg,T0());if(!ics){toast('مفيش مواعيد خلال الـ 45 يوم الجاية');return}const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',ics,'مواعيد مزرعة الأرانب');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{const el=e.target.closest('[data-open],[data-add],[data-sub],[data-more],[data-vac],[data-go],[data-tab],[data-act],#shx,#sv,#dl,#sheet');if(!el)return;const d=el.dataset;

@@ -97,5 +97,6 @@ if(r.bd!=null&&r.wd==null){if(o.vit>=T)add('ab','💉 حقنة مضاد حيوي
 for(const[t,L]of[['does',S.does],['bucks',S.bucks]])for(const a of L){if(!act(a))continue;const b=vac(a.vb,c.BacterialVaccineCycle,c,T),v=vac(a.vv,c.ViralVaccineCycle,c,T);if(b.next!=null)add('vb','💉 تحصين بكتيري',b.next,a.c,1);if(v.next!=null)add('vv','💉 تحصين فيروسي',v.next,a.c,1)}
 const z=new Date().toISOString().replace(/[-:]|\.\d+/g,'');
 const ev=Object.values(g).map(e=>{const s=e.title+' ('+e.w.length+')';return['BEGIN:VEVENT','UID:rf-'+e.ty+'-'+e.day+'@rabbitfarm','DTSTAMP:'+z,'DTSTART:'+dt(e.day)+'T090000','DTEND:'+dt(e.day)+'T093000','SUMMARY:'+tx(s),'DESCRIPTION:'+tx(e.w.join('، ')),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+tx(s),'TRIGGER:PT0S','END:VALARM','END:VEVENT'].join('\r\n')});
+if(!ev.length)return null;
 return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RabbitFarm//AR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n')}
 return{DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
