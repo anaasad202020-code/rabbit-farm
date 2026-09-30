@@ -54,6 +54,32 @@ input,select{width:100%;min-height:44px;border:1px solid var(--ln);border-radius
 .tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;background:var(--sf);border:1px solid var(--ln);border-radius:12px}th,td{padding:8px 10px;text-align:start;border-bottom:1px solid var(--ln);white-space:nowrap}th{color:var(--mu);font-weight:500}
 #toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#20302a;color:#fff;padding:10px 16px;border-radius:12px;z-index:30;display:flex;gap:14px;align-items:center;max-width:92%}
 #toast button{background:none;border:0;color:#ffd24d;font:inherit;font-weight:700}
+
+/* touch feedback */
+button,.btn,label.btn{transition:transform .12s ease,filter .12s ease,background-color .15s;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+button:active,label.btn:active{transform:scale(.95);filter:brightness(.88)}
+button.cd:active{transform:scale(.98);filter:none;background:var(--nb)}
+.ddb:active{transform:scale(.985)}
+nav button:active{transform:scale(.9)}
+.fab:active{transform:scale(.88)}
+.ddo:active{transform:none;filter:none;background:var(--nb)}
+.sh{animation:su .22s ease-out}
+@keyframes su{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+/* clean native selects */
+select{appearance:none;-webkit-appearance:none;padding-left:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238a9a90' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center}
+/* dropdown */
+.dd{position:relative}
+.ddb{width:100%;min-height:46px;display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--ln);border-radius:12px;padding:8px 12px;background:var(--sf);color:var(--ink);font:inherit;text-align:start}
+.ddb .ddv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ddb .ddc{color:var(--mu);font-size:12px}
+.ddl{margin-top:6px;border:1px solid var(--ln);border-radius:12px;background:var(--sf);box-shadow:0 6px 18px rgba(0,0,0,.2);overflow:hidden}
+.dds{border:0;border-bottom:1px solid var(--ln);border-radius:0;min-height:42px}
+.ddi{max-height:230px;overflow-y:auto;overscroll-behavior:contain}
+.ddo{display:flex;width:100%;justify-content:space-between;align-items:center;border:0;border-bottom:1px solid var(--ln);border-radius:0;background:none;color:var(--ink);font:inherit;padding:12px 14px;text-align:start;min-height:46px}
+.ddo:last-child{border-bottom:0}
+.ddo.sel,.ddo.nw{color:var(--pr);font-weight:700}
+.ddn{margin-top:8px}
+.dde{padding:14px;color:var(--mu);text-align:center;font-size:14px}
 </style>
 </head>
 <body>
@@ -180,14 +206,18 @@ h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):sumV();$('#main').in
 
 /* ---------- forms ---------- */
 function optList(t,k){if(t==='br'&&k==='m')return rows('does').filter(act).map(x=>x.c);if(t==='br'&&k==='b')return rows('bucks').filter(act).map(x=>x.c);if(t==='sales'&&k==='cu')return rows('cust').map(x=>x.c);return[]}
+function ddHtml(t,k,v,ty){const L=optList(t,k),cu=ty==='cu';
+let it=(cu?'<button type="button" class="ddo nw" data-ddv="__new">＋ زبون جديد</button><button type="button" class="ddo" data-ddv="">— بدون زبون —</button>':'')+L.slice(0,1500).map(x=>`<button type="button" class="ddo${x===v?' sel':''}" data-ddv="${esc(x)}">${esc(x)}${x===v?'<span>✓</span>':''}</button>`).join('');
+if(!L.length&&!cu)it='<div class="dde">مفيش اختيارات — أضفها من «الحيوانات» أولًا</div>';
+return `<div class="dd" data-dd="${k}"><input type="hidden" id="f_${k}" value="${esc(v)}"><button type="button" class="ddb" data-ddo="1"><span class="ddv">${esc(v||(cu?'— بدون —':'اختر…'))}</span><span class="ddc">▾</span></button><div class="ddl" hidden><input type="search" class="dds" placeholder="بحث…" autocomplete="off"><div class="ddi">${it}</div></div></div>${cu?'<input id="f_cu_new" class="ddn" placeholder="اسم الزبون الجديد" maxlength="60" hidden>':''}`}
 function fieldHtml(t,f,r,edit){const[k,l,ty,rq]=f,v=r[k]==null?'':r[k],id='f_'+k;const lb=`<label for="${id}">${l}${rq?'<i> *</i>':''}</label>`;let inp;
 if(Array.isArray(ty))inp=`<select id="${id}">${ty.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${o||'—'}</option>`).join('')}</select>`;
 else if(ty==='date')inp=`<input id="${id}" type="date" value="${esc(v)}" max="${todayS()}">`;
 else if(ty==='int'||ty==='dec')inp=`<input id="${id}" type="number" inputmode="${ty==='int'?'numeric':'decimal'}" min="0" step="${ty==='int'?1:'any'}" value="${esc(v)}">`;
-else if(ty==='ref'||ty==='cu')inp=`<input id="${id}" list="dl_${k}" value="${esc(v)}" autocomplete="off" maxlength="60"><datalist id="dl_${k}">${optList(t,k).slice(0,1500).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`;
+else if(ty==='ref'||ty==='cu')inp=ddHtml(t,k,v,ty);
 else inp=`<input id="${id}" type="${ty==='tel'?'tel':'text'}" value="${esc(v)}" maxlength="${k==='nt'?200:60}"${edit&&k==='c'?' readonly':''}>`;
 return `<div class="fl">${lb}${inp}</div>`}
-function collect(t){const o={};for(const f of SCHEMA[t]){const e=document.getElementById('f_'+f[0]);if(e)o[f[0]]=e.value}return o}
+function collect(t){const o={};for(const f of SCHEMA[t]){const e=document.getElementById('f_'+f[0]);if(e)o[f[0]]=e.value}if(t==='sales'&&!o.cu){const n=document.getElementById('f_cu_new');if(n&&n.value.trim())o.cu=n.value.trim()}return o}
 function openForm(t,id){const r=id?byId(t).get(id):{};if(id&&!r)return;FS={t,id:id||null};
 $('#sht').textContent=(id?'تعديل ':'إضافة ')+NM[t];
 $('#shb').innerHTML=`<div id="fm">${SCHEMA[t].map(f=>fieldHtml(t,f,r,!!id)).join('')}</div><div id="pv" class="pv"></div><div id="er" class="er"></div><div class="acts"><button class="btn" id="sv">حفظ</button>${id?'<button class="btn d" id="dl">حذف</button>':''}</div>`;
@@ -286,6 +316,20 @@ if(d.add)return openForm(d.add);
 if(d.open){const[t,id]=d.open.split('|');return openForm(t,id)}
 if(d.vac)return quickVac(d.vac);
 if(d.act)return doAct(d.act,el)});
+document.addEventListener('click',e=>{
+const b=e.target.closest('[data-ddo]');
+if(b){const l=b.closest('.dd').querySelector('.ddl'),op=l.hidden;document.querySelectorAll('.ddl').forEach(x=>{x.hidden=true});l.hidden=!op;
+if(op){const s=l.querySelector('.dds');s.value='';l.querySelectorAll('.ddo').forEach(x=>{x.hidden=false});try{l.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(_){}}return}
+const o=e.target.closest('[data-ddv]');if(!o)return;
+const dd=o.closest('.dd'),v=o.dataset.ddv,h=dd.querySelector('input[type=hidden]'),n=document.getElementById('f_cu_new');
+if(v==='__new'){h.value='';dd.querySelector('.ddv').textContent='＋ زبون جديد';if(n){n.hidden=false;n.focus()}}
+else{h.value=v;dd.querySelector('.ddv').textContent=v||'— بدون —';if(n){n.hidden=true;n.value=''}}
+dd.querySelectorAll('.ddo').forEach(x=>{x.classList.remove('sel');const s=x.querySelector('span');if(s)s.remove()});
+if(v&&v!=='__new'){o.classList.add('sel');o.insertAdjacentHTML('beforeend','<span>✓</span>')}
+dd.querySelector('.ddl').hidden=true;h.dispatchEvent(new Event('change',{bubbles:true}))});
+document.addEventListener('input',e=>{const t=e.target;if(t.classList&&t.classList.contains('dds')){const s=t.value.trim().toLowerCase();
+t.closest('.ddl').querySelectorAll('.ddo').forEach(b=>{b.hidden=!!s&&b.dataset.ddv!=='__new'&&!b.textContent.toLowerCase().includes(s)})}});
+document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('button,label.btn')){try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}}},{passive:true});
 let qt=0;
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
