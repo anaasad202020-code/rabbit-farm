@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c6a53"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="مزرعة الأرانب">
+<title>مزرعة الأرانب</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f0f4f1;--sf:#fff;--ink:#14241c;--mu:#5f7066;--ln:#d9e2dc;--pr:#0c6a53;--pt:#fff;--rc:#b42626;--rb:#fbe8e8;--yc:#8f6100;--yb:#fcf1cf;--gc:#1f7a3f;--gb:#e1f3e7;--bc:#1f5f9f;--bb:#e3edf9;--oc:#b4520f;--ob:#fdebdc;--nc:#56646b;--nb:#e9eeeb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1612;--sf:#17221c;--ink:#e7f0ea;--mu:#93a99c;--ln:#2a3a31;--pr:#3dbb95;--pt:#062018;--rc:#ff8f8f;--rb:#3a1c1c;--yc:#f3c95a;--yb:#38300f;--gc:#77d497;--gb:#15301f;--bc:#8bbcf0;--bb:#15263a;--oc:#f5a06a;--ob:#38220f;--nc:#a5b5ad;--nb:#222e27}}
+:root[data-theme=dark]{--bg:#0e1612;--sf:#17221c;--ink:#e7f0ea;--mu:#93a99c;--ln:#2a3a31;--pr:#3dbb95;--pt:#062018;--rc:#ff8f8f;--rb:#3a1c1c;--yc:#f3c95a;--yb:#38300f;--gc:#77d497;--gb:#15301f;--bc:#8bbcf0;--bb:#15263a;--oc:#f5a06a;--ob:#38220f;--nc:#a5b5ad;--nb:#222e27}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Tajawal,system-ui,"Noto Sans Arabic",sans-serif;-webkit-tap-highlight-color:transparent}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--pr);color:var(--pt)}
+.bar h1{font-size:19px;margin:0}
+.pill{border:0;border-radius:99px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:500}
+main{padding:12px 12px 96px;max-width:720px;margin:0 auto}
+h3{font-size:15px;margin:18px 2px 8px;color:var(--mu);font-weight:700}h3 small{font-weight:500}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px);z-index:6}
+nav button{flex:1;border:0;background:none;color:var(--mu);font:inherit;font-size:12px;padding:8px 2px;min-height:56px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:20px;line-height:1}nav .on{color:var(--pr);font-weight:700}
+.hero{padding:6px 4px 12px}.hero small{color:var(--mu)}.hero h2{margin:2px 0 0;font-size:23px;line-height:1.3}
+.kp3{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.kp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.k{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.kp3 .k{align-items:center;border:0;padding:10px 4px}.kp3 .k b{font-size:26px;line-height:1.1}.kp3 .k span{font-size:12px}
+.kp .k span{font-size:13px;color:var(--mu)}.kp .k b{font-size:18px}.k.neg b{color:var(--rc)}
+.cd{display:block;width:100%;text-align:start;background:var(--sf);color:inherit;border:1px solid var(--ln);border-radius:14px;padding:12px;margin-bottom:8px;font:inherit}
+button.cd{cursor:pointer}.cd.dim{opacity:.6}
+.row{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:space-between;align-items:center}
+.mu{color:var(--mu);font-size:13.5px;margin-top:2px}
+.ch{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12.5px;font-weight:500}
+.c-r{background:var(--rb);color:var(--rc)}.c-y{background:var(--yb);color:var(--yc)}.c-g{background:var(--gb);color:var(--gc)}.c-b,.c-ok{background:var(--bb);color:var(--bc)}.c-o{background:var(--ob);color:var(--oc)}.c-n{background:var(--nb);color:var(--nc)}
+.seg{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}.seg button{flex:1;white-space:nowrap;border:1px solid var(--ln);background:var(--sf);color:var(--ink);border-radius:99px;padding:8px 14px;font:inherit;min-height:40px}.seg .on{background:var(--pr);color:var(--pt);border-color:var(--pr)}
+.tb{display:flex;gap:8px;margin-bottom:10px}.tb input{flex:1;min-width:0}
+input,select{width:100%;min-height:44px;border:1px solid var(--ln);border-radius:12px;padding:8px 12px;font:inherit;background:var(--sf);color:var(--ink)}
+.tb select{width:auto;max-width:40%}
+.fl{margin-bottom:10px}.fl label{display:block;font-size:13.5px;color:var(--mu);margin-bottom:3px}.fl i{color:var(--rc)}
+.btn{display:inline-flex;align-items:center;justify-content:center;background:var(--pr);color:var(--pt);border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;min-height:46px;cursor:pointer}
+.btn.s{background:transparent;color:var(--pr);border:1px solid var(--ln)}.btn.d{background:var(--rc);color:#fff}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.acts .btn{flex:1}
+.fab{position:fixed;inset-inline-end:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--pr);color:var(--pt);font-size:30px;line-height:1;z-index:4;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.lnk{display:block;width:100%;background:none;border:0;color:var(--pr);font:inherit;font-weight:700;padding:12px}
+.empty{text-align:center;color:var(--mu);padding:32px 12px}
+.vr{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:space-between;margin-top:8px;font-size:14px}
+.mini{border:1px solid var(--ln);background:var(--sf);color:var(--pr);border-radius:10px;padding:6px 10px;font:inherit;font-size:13px;min-height:36px}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:20}
+.sh{background:var(--bg);width:100%;max-height:93%;overflow:auto;border-radius:18px 18px 0 0;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px));max-width:720px;margin:0 auto}
+.shh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.shh b{font-size:18px}.shh button{border:0;background:var(--sf);border-radius:50%;width:38px;height:38px;color:var(--ink);font-size:16px}
+.pv{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:4px 12px;margin-top:6px}.pv div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--ln);font-size:14.5px}.pv div:last-child{border:0}.pv span{color:var(--mu)}.pv:empty{display:none}
+.warn{background:var(--ob);color:var(--oc);border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14.5px}.pv .warn{display:block}
+.er{color:var(--rc);font-weight:500;margin-top:8px;min-height:0}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;background:var(--sf);border:1px solid var(--ln);border-radius:12px}th,td{padding:8px 10px;text-align:start;border-bottom:1px solid var(--ln);white-space:nowrap}th{color:var(--mu);font-weight:500}
+#toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#20302a;color:#fff;padding:10px 16px;border-radius:12px;z-index:30;display:flex;gap:14px;align-items:center;max-width:92%}
+#toast button{background:none;border:0;color:#ffd24d;font:inherit;font-weight:700}
+</style>
+</head>
+<body>
+<header class="bar"><h1 id="ttl"></h1><button id="sync" class="pill c-n" data-tab="set">…</button></header>
+<main id="main"></main>
+<nav id="nav"></nav>
+<div id="sheet" hidden><div class="sh"><div class="shh"><b id="sht"></b><button id="shx" aria-label="إغلاق">✕</button></div><div id="shb"></div></div></div>
+<div id="toast" hidden></div>
+
+<script src="core.js"></script>
+
+<script id="app">
+(()=>{
+'use strict';
+const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const R2=n=>Math.round(n*100)/100,nf=n=>R2(n).toLocaleString('en-US'),money=n=>n==null?'—':nf(n)+' ج.م',pc=n=>n==null?'—':Math.round(n*100)+'%';
+const T0=()=>D(todayS());
+const NM={br:'تلقيح',does:'أم',bucks:'ذكر',sales:'عملية بيع',exp:'مصروف',cust:'زبون'};
+const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','الحيوانات','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
+const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
+const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
+let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null;
+const S={cfg:{...DEF},ch:{},v:0};for(const t in SCHEMA)S.ch[t]=[[]];
+const C={};const memo=(k,fn)=>{const e=C[k];if(e&&e.v===S.v)return e.r;const r=fn();C[k]={v:S.v,r};return r};
+const rows=t=>memo('r'+t,()=>[].concat(...S.ch[t]));
+const byId=t=>memo('i'+t,()=>{const m=new Map();for(const r of rows(t))m.set(r.id,r);return m});
+const codes=t=>memo('c'+t,()=>{const m=Object.create(null);for(const r of rows(t))m[r.c]=r;return m});
+const ST=()=>memo('st',()=>stats(rows('br'),S.cfg));
+const view=()=>({does:rows('does'),bucks:rows('bucks'),br:rows('br'),sales:rows('sales'),exp:rows('exp')});
+
+/* ---------- storage: IndexedDB (device) + db capability (account) ---------- */
+let IDB=null,remote=null,pushing=false,timer=0,rt=0,retry=0,cur='loc',note='';
+const dirty=new Map(),revs={};
+const idbOpen=()=>new Promise((res,rej)=>{try{const q=indexedDB.open('rabbitfarm',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}});
+const idbAll=()=>new Promise((res,rej)=>{const q=IDB.transaction('kv').objectStore('kv').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+const idbPut=v=>new Promise((res,rej)=>{const t=IDB.transaction('kv','readwrite');t.objectStore('kv').put(v);t.oncomplete=res;t.onerror=t.onabort=()=>rej(t.error)});
+const SM={ok:['✓ محفوظ ومتزامن','g'],busy:['… جارٍ الحفظ','y'],loc:['محفوظ على الجهاز فقط','n'],err:['⚠ تعذّر الحفظ','r']};
+function setSt(k,m){if(k==='loc'&&!IDB)k='err';cur=k;note=m||'';const p=$('#sync');p.textContent=m||SM[k][0];p.className='pill c-'+SM[k][1]}
+function applyDoc(d){if(d.id==='cfg'){S.cfg={...DEF,...d.cfg}}else if(S.ch[d.k]&&Number.isInteger(d.n)&&d.n>=0&&d.n<5000){const a=S.ch[d.k];while(a.length<=d.n)a.push([]);a[d.n]=Array.isArray(d.rows)?d.rows:[]}}
+const stamp=id=>{const r=Math.max(Date.now(),(revs[id]||0)+1);revs[id]=r;return r};
+function enqueue(d){dirty.set(d.id,d);if(IDB)idbPut({...d,dirty:1}).catch(()=>setSt('err','تعذّر الحفظ على الجهاز'));clearTimeout(timer);timer=setTimeout(push,700);if(cur!=='err')setSt(remote?'busy':'loc')}
+const qd=(t,ci)=>{const id=t+'-'+ci;enqueue({id,k:t,n:ci,rev:stamp(id),rows:(S.ch[t][ci]||[]).slice()})};
+const qc=()=>enqueue({id:'cfg',k:'cfg',rev:stamp('cfg'),cfg:{...S.cfg}});
+const bodyOf=d=>d.k==='cfg'?{k:'cfg',rev:d.rev,cfg:d.cfg}:{k:d.k,n:d.n,rev:d.rev,rows:d.rows};
+function netErr(e){const c=e&&e.code;if(c==='quota_exceeded'){setSt('err','الحد الأقصى للتخزين');return}setSt('loc');clearTimeout(rt);rt=setTimeout(()=>{if(remote)pull().then(push).catch(netErr)},Math.min(120000,15000*(++retry)))}
+async function push(){if(pushing||!remote)return;pushing=true;
+try{while(dirty.size){const[id,d]=dirty.entries().next().value;await remote.doc('farm/'+id).set(bodyOf(d));if(dirty.get(id)===d){dirty.delete(id);if(IDB)idbPut({...d,dirty:0}).catch(()=>0)}}retry=0;setSt('ok')}
+catch(e){netErr(e)}finally{pushing=false}}
+async function pull(){const snap=await remote.collection('farm').limit(1000).get();const have=new Set();let ch=false;
+for(const s of snap.docs){const b=JSON.parse(JSON.stringify(s.data()||null));if(!b)continue;have.add(s.id);if(dirty.has(s.id))continue;if(revs[s.id]!=null&&revs[s.id]>=b.rev)continue;
+const d={id:s.id,...b};applyDoc(d);revs[s.id]=b.rev;if(IDB)idbPut({...d,dirty:0}).catch(()=>0);ch=true}
+for(const t in S.ch)S.ch[t].forEach((rs,i)=>{const id=t+'-'+i;if(!have.has(id)&&rs.length&&!dirty.has(id))qd(t,i)});
+if(!have.has('cfg')&&revs.cfg!=null&&!dirty.has('cfg'))qc();
+if(ch){S.v++;if(!FS)render()}}
+async function boot(){
+try{IDB=await idbOpen();for(const d of await idbAll()){applyDoc(d);revs[d.id]=d.rev;if(d.dirty)dirty.set(d.id,d)}}catch(e){IDB=null}
+S.v++;render();
+try{remote=window.claude&&claude.use?await claude.use('db'):null}catch(e){remote=null}
+if(remote){setSt('busy');try{await pull();await push()}catch(e){netErr(e)}}else setSt(dirty.size||IDB?'loc':'err')}
+
+/* ---------- data ops ---------- */
+function locate(t,id){const a=S.ch[t];for(let i=0;i<a.length;i++){const j=a[i].findIndex(x=>x.id===id);if(j>=0)return[i,j]}return null}
+function touch(t,ci){const ch=S.ch[t][ci];if(ch.length>1&&JSON.stringify(ch).length>120000){const h=ch.splice(ch.length>>1);S.ch[t].push(h);qd(t,S.ch[t].length-1)}qd(t,ci);S.v++}
+function put(t,r){const p=locate(t,r.id);let ci;if(p){S.ch[t][p[0]][p[1]]=r;ci=p[0]}else{const a=S.ch[t];let l=a[a.length-1];if(!l||l.length>=CH){l=[];a.push(l)}l.push(r);ci=a.length-1}touch(t,ci)}
+function del(t,id){const p=locate(t,id);if(!p)return;S.ch[t][p[0]].splice(p[1],1);touch(t,p[0])}
+
+/* ---------- ui helpers ---------- */
+let tt=0;
+function toast(m,undo){const e=$('#toast');e.innerHTML='<span>'+esc(m)+'</span>'+(undo?'<button id="un">تراجع</button>':'');e.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{e.hidden=true},undo?6000:2500);if(undo)$('#un').onclick=()=>{e.hidden=true;undo()}}
+function showSheet(){$('#sheet').hidden=false;try{history.pushState({s:1},'')}catch(e){}}
+function hideSheet(){$('#sheet').hidden=true;FS=null}
+function closeSheet(){if(history.state&&history.state.s)history.back();else hideSheet()}
+addEventListener('popstate',()=>{if(!$('#sheet').hidden)hideSheet()});
+const curT=()=>tab==='br'?'br':tab==='an'?sub.an:tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
+function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';pg=1;render();try{scrollTo(0,0)}catch(e){}}
+
+/* ---------- views ---------- */
+const brCard=({r,o},extra)=>`<button class="cd" data-open="br|${r.id}"><div class="row"><b>${esc(r.m)} × ${esc(r.b)}</b><span class="ch c-${o.st[1]}">${o.st[0]}</span></div><div class="mu">${r.d}${extra?' · '+extra:''}</div></button>`;
+const vacCard=(a,t,b,v)=>{const ln=(lb,x,f)=>`<div class="vr"><span>${lb}${x.next?' · '+F(x.next):''}</span><span class="ch c-${x.st[1]}">${x.st[0]}</span><button class="mini" data-vac="${t}|${a.id}|${f}">حصّنت اليوم</button></div>`;
+return `<div class="cd"><div class="row"><b>${esc(a.c)}</b><span class="mu">${t==='does'?'أم':'ذكر'}</span></div>${ln('بكتيري',b,'vb')}${ln('فيروسي',v,'vv')}</div>`};
+function todayV(){const c=S.cfg,T=T0();const A=memo('al'+todayS(),()=>alerts(view(),c,T));
+let dt=todayS();try{dt=new Date().toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}catch(e){}
+const k=(n,l,x)=>`<div class="k c-${x}"><b>${n}</b><span>${l}</span></div>`;
+let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.urgent.length?A.urgent.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.urgent.length,'عاجل','r')}${k(A.soon.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>`;
+if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «الحيوانات».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
+const sec=(ti,L,fn,g)=>L.length?`<h3>${ti} <small>${L.length}</small></h3>${L.slice(0,20).map(fn).join('')}${L.length>20&&g?`<button class="lnk" data-go="${g}">عرض الكل (${L.length})</button>`:''}`:'';
+h+=sec('🔴 يحتاج إجراء اليوم',A.urgent,x=>brCard(x),'br||u')+sec('🟡 قريب من موعده',A.soon,x=>brCard(x),'br||s')+sec('💉 تحصينات متأخرة أو قريبة',A.vacs,x=>vacCard(x.a,x.t,x.b,x.v),'an|vac|l')+sec('⚠️ تنبيهات قرابة',A.kins,x=>brCard(x,'قرابة قريبة محتملة'),'')+sec('🐰 أمهات جاهزة للتلقيح الأول',A.ready,x=>`<button class="cd" data-open="does|${x.a.id}"><b>${esc(x.a.c)}</b><span class="mu"> · جاهزة من ${F(x.from)}</span></button>`,'');
+return h}
+function sumV(){const d=memo('d'+todayS(),()=>dash(view(),S.cfg,T0()));const k=(l,v,x)=>`<div class="k ${x||''}"><span>${l}</span><b>${v}</b></div>`;
+return `<h3>كل الفترات</h3><div class="kp">${k('صافي الربح',money(d.net),d.net<0?'neg':'')}${k('إجمالي الإيراد',money(d.rev))}${k('إجمالي المصروفات',money(d.exp))}${k('تكلفة الكيلو (تقريبية)',money(d.cpk))}</div>
+<h3>السنة الحالية</h3><div class="kp">${k('الإيراد',money(d.ry))}${k('المصروفات',money(d.ey))}${k('صافي الربح',money(d.ny),d.ny<0?'neg':'')}${k('متوسط الربح الشهري',money(d.avgM),d.avgM<0?'neg':'')}</div>
+<h3>الإنتاج</h3><div class="kp">${k('أمهات نشطة',d.activeDoes)}${k('ذكور نشطة',d.activeBucks)}${k('أمهات تحتاج مراجعة',d.badDoes)}${k('ذكور تحتاج مراجعة',d.badBucks)}${k('نسبة الفطام العامة',pc(d.wp))}${k('إجمالي المفطومين',d.weaned)}${k('عدد التلقيحات',d.matings)}${k('الوزن المباع (كجم)',nf(d.kg))}</div>
+<h3>سنة بسنة</h3>${d.years.length?`<div class="tbl"><table><tr><th>السنة</th><th>الإيراد</th><th>المصروف</th><th>الصافي</th></tr>${d.years.map(y=>`<tr><td>${y.y}</td><td>${nf(y.rev)}</td><td>${nf(y.exp)}</td><td style="color:var(--${y.net<0?'rc':'gc'})">${nf(y.net)}</td></tr>`).join('')}</table></div>`:'<div class="empty">هتظهر هنا بعد تسجيل مبيعات ومصروفات</div>'}`}
+function listShell(t){const FL={br:[['','الكل'],['u','عاجل'],['s','قريب'],['g','جارية'],['x','مكتملة']],vac:[['','الكل'],['l','متأخر'],['s','قريب']],does:[['','الكل'],['a','نشطة'],['w','تحتاج مراجعة']]};FL.bucks=FL.does;const f=FL[t];
+return `<div class="tb"><input id="q" type="search" placeholder="بحث…" value="${esc(q)}" autocomplete="off">${f?`<select id="flt">${f.map(([k,l])=>`<option value="${k}"${flt===k?' selected':''}>${l}</option>`).join('')}</select>`:''}</div><div id="lst"></div>${t==='vac'?'':`<button class="fab" data-add="${t}" aria-label="إضافة">＋</button>`}`}
+const sortD=(R,k)=>R.slice().sort((a,b)=>a[k]<b[k]?1:a[k]>b[k]?-1:0);
+function items(t){const c=S.cfg,T=T0(),R=rows(t);const mk=(id,title,sb,ch,k,f,dim)=>({tb:t,id,title,sub:sb,c:ch,k,f:f||'',dim,hay:(title+' '+sb).toLowerCase()});
+if(t==='br')return sortD(R,'d').map(r=>{const o=calc(r,c,T),k=o.st?o.st[1]:'';return mk(r.id,r.m+' × '+r.b,[r.d,r.bd?'ولادة '+r.bd:o.exp?'ولادة متوقعة '+F(o.exp):'',r.al!=null?r.al+' حي':''].filter(Boolean).join(' · '),o.st&&o.st[0],k,{r:'u',b:'u',y:'s',g:'g',ok:'x'}[k])});
+if(t==='does'||t==='bucks'){const X=ST()[t==='does'?'M':'B'];return R.slice().sort((a,b)=>a.c.localeCompare(b.c,'ar',{numeric:true})).map(a=>{const x=X[a.c]||Core.empty(c);return mk(a.id,a.c+(a.sl?' · '+a.sl:''),`${x.n} تلقيح · نجاح ${pc(x.sr)} · فطام ${pc(x.wp)}`+(act(a)?'':' · '+a.s),x.rate[0],x.rate[1],(act(a)?'a':'')+(x.rate[1]==='o'?'w':''),!act(a))})}
+if(t==='sales')return sortD(R,'d').map(s=>mk(s.id,`${s.n} أرنب · ${money(saleTotal(s))}`,[s.d,s.cu,R2(s.w)+' كجم',s.n?'متوسط '+R2(s.w/s.n)+' كجم':''].filter(Boolean).join(' · ')));
+if(t==='exp')return sortD(R,'d').map(e=>mk(e.id,`${e.ty} · ${money(e.a)}`,[e.d,e.dt].filter(Boolean).join(' · ')));
+if(t==='cust'){const A=memo('ca',()=>custAgg(rows('sales')));return R.slice().sort((a,b)=>a.c.localeCompare(b.c,'ar')).map(u=>{const x=A[u.c]||{n:0,rab:0,kg:0,paid:0};return mk(u.id,u.c+(u.ty?' · '+u.ty:''),`${x.n} مرة · ${x.rab} أرنب · ${money(x.paid)}`+(x.kg?' · '+money(x.paid/x.kg)+'/كجم':''))})}
+return[]}
+function vacItems(){const c=S.cfg,T=T0(),out=[],P={r:0,y:1,n:2,g:3};
+for(const t of['does','bucks'])for(const a of rows(t)){if(!act(a))continue;const b=vac(a.vb,c.BacterialVaccineCycle,c,T),v=vac(a.vv,c.ViralVaccineCycle,c,T);
+out.push({p:Math.min(P[b.st[1]],P[v.st[1]]),f:(b.st[1]==='r'||v.st[1]==='r'?'l':'')+(b.st[1]==='y'||v.st[1]==='y'?'s':''),hay:a.c.toLowerCase(),h:vacCard(a,t,b,v)})}
+return out.sort((x,y)=>x.p-y.p||(x.hay<y.hay?-1:1))}
+const cardHtml=x=>x.h||`<button class="cd${x.dim?' dim':''}" data-open="${x.tb}|${x.id}"><div class="row"><b>${esc(x.title)}</b>${x.c?`<span class="ch c-${x.k}">${esc(x.c)}</span>`:''}</div><div class="mu">${esc(x.sub)}</div></button>`;
+function fillList(){const t=curT();if(!t)return;let it=t==='vac'?vacItems():items(t);const s=q.trim().toLowerCase();
+if(s)it=it.filter(x=>x.hay.includes(s));if(flt)it=it.filter(x=>x.f&&x.f.includes(flt));
+const n=it.length,sh=it.slice(0,pg*30),base=t==='vac'?rows('does').length+rows('bucks').length:rows(t).length;
+$('#lst').innerHTML=(n?sh.map(cardHtml).join(''):`<div class="empty">${base?'مفيش نتائج مطابقة':'لسه مفيش بيانات — اضغط ＋ للإضافة'}</div>`)+(n>sh.length?`<button class="lnk" data-more="1">عرض المزيد (${n-sh.length})</button>`:'')}
+function setV(){const ts=Object.keys(S.ch).map(t=>[t,rows(t).length]);const kb=Math.round(JSON.stringify(Object.keys(S.ch).map(t=>rows(t))).length/1024);
+const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وعلى حسابك.':cur==='busy'?'جارٍ الحفظ…':cur==='loc'?'كل البيانات محفوظة على جهازك وتشتغل بدون إنترنت. خد نسخة احتياطية كل فترة وابعتها لنفسك.':'تعذّر الحفظ — نزّل نسخة احتياطية الآن.';
+return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
+<div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>
+${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button>`}
+function render(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
+$('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
+const t=curT();let h=SUBS[tab]?`<div class="seg">${SUBS[tab].map(([k,l])=>`<button data-sub="${k}" class="${sub[tab]===k?'on':''}">${l}</button>`).join('')}</div>`:'';
+h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):sumV();$('#main').innerHTML=h;if(t)fillList()}
+
+/* ---------- forms ---------- */
+function optList(t,k){if(t==='br'&&k==='m')return rows('does').filter(act).map(x=>x.c);if(t==='br'&&k==='b')return rows('bucks').filter(act).map(x=>x.c);if(t==='sales'&&k==='cu')return rows('cust').map(x=>x.c);return[]}
+function fieldHtml(t,f,r,edit){const[k,l,ty,rq]=f,v=r[k]==null?'':r[k],id='f_'+k;const lb=`<label for="${id}">${l}${rq?'<i> *</i>':''}</label>`;let inp;
+if(Array.isArray(ty))inp=`<select id="${id}">${ty.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${o||'—'}</option>`).join('')}</select>`;
+else if(ty==='date')inp=`<input id="${id}" type="date" value="${esc(v)}" max="${todayS()}">`;
+else if(ty==='int'||ty==='dec')inp=`<input id="${id}" type="number" inputmode="${ty==='int'?'numeric':'decimal'}" min="0" step="${ty==='int'?1:'any'}" value="${esc(v)}">`;
+else if(ty==='ref'||ty==='cu')inp=`<input id="${id}" list="dl_${k}" value="${esc(v)}" autocomplete="off" maxlength="60"><datalist id="dl_${k}">${optList(t,k).slice(0,1500).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`;
+else inp=`<input id="${id}" type="${ty==='tel'?'tel':'text'}" value="${esc(v)}" maxlength="${k==='nt'?200:60}"${edit&&k==='c'?' readonly':''}>`;
+return `<div class="fl">${lb}${inp}</div>`}
+function collect(t){const o={};for(const f of SCHEMA[t]){const e=document.getElementById('f_'+f[0]);if(e)o[f[0]]=e.value}return o}
+function openForm(t,id){const r=id?byId(t).get(id):{};if(id&&!r)return;FS={t,id:id||null};
+$('#sht').textContent=(id?'تعديل ':'إضافة ')+NM[t];
+$('#shb').innerHTML=`<div id="fm">${SCHEMA[t].map(f=>fieldHtml(t,f,r,!!id)).join('')}</div><div id="pv" class="pv"></div><div id="er" class="er"></div><div class="acts"><button class="btn" id="sv">حفظ</button>${id?'<button class="btn d" id="dl">حذف</button>':''}</div>`;
+showSheet();pv()}
+function pv(){if(!FS)return;const{t,id}=FS,c=S.cfg,T=T0(),r=clean(t,{...collect(t),id:id||'x'});let h='';
+const L=(l,n)=>n==null||n===''?'':`<div><span>${l}</span><b>${n}</b></div>`;
+if(t==='br'){const o=calc(r,c,T);h=L('الجسة الأولى',F(o.t1))+L('الجسة الثانية',F(o.t2))+L('الولادة المتوقعة',F(o.exp))+L('حقنة المضاد الحيوي',F(o.ab))+L('حقنة الفيتامين',F(o.vit))+L('الفطام المتوقع',F(o.wean))+L('إجمالي المواليد',o.tot)+L('نافق أثناء الرضاعة',o.died)+L('نسبة الفطام',o.wp==null?'':pc(o.wp))+(o.st?`<div><span>الحالة</span><b class="ch c-${o.st[1]}">${o.st[0]}</b></div>`:'');
+if(kin(r,codes('does'),codes('bucks'))==='w')h+='<div class="warn">⚠️ قرابة قريبة محتملة (جيل واحد) - راجع قبل التلقيح</div>'}
+else if(t==='sales'){if(r.w!=null&&r.p!=null)h=L('المبلغ الإجمالي',money(saleTotal(r)))+(r.n?L('متوسط وزن الأرنب',R2(r.w/r.n)+' كجم'):'')}
+else if((t==='does'||t==='bucks')&&id){const x=ST()[t==='does'?'M':'B'][r.c]||Core.empty(c);const b=D(r.bd);
+h=(t==='does'&&b!=null?L('جاهزة للتلقيح الأول من',F(b+c.FirstMatingAge)):'')+L('عدد التلقيحات',x.n)+L('نسبة نجاح التلقيح',pc(x.sr))+L('الولادات الفعلية',x.b)+L('متوسط المواليد الأحياء',x.avgAl==null?'—':R2(x.avgAl))+L('متوسط المفطومين',x.avgWc==null?'—':R2(x.avgWc))+L('نسبة الفطام',pc(x.wp))+L(t==='does'?'آخر تلقيح':'آخر استخدام',F(x.last)||'—')+`<div><span>التقييم</span><b class="ch c-${x.rate[1]}">${x.rate[0]}</b></div>`}
+$('#pv').innerHTML=h}
+function validate(t,r,isNew){const T=T0();
+for(const f of SCHEMA[t])if(f[3]&&r[f[0]]==null)return `«${f[1]}» مطلوب`;
+for(const f of SCHEMA[t])if(f[2]==='date'&&r[f[0]]&&D(r[f[0]])>T)return `«${f[1]}» لا يمكن أن يكون في المستقبل`;
+if(t==='br'){const d=D(r.d),bd=D(r.bd),wd=D(r.wd),M=codes('does')[r.m],B=codes('bucks')[r.b];
+if(!M)return 'كود الأم غير موجود — أضفها من «الحيوانات» أولًا';if(!B)return 'كود الذكر غير موجود — أضفه من «الحيوانات» أولًا';
+if(isNew&&!act(M))return 'الأم دي مستبعدة أو نافقة';if(isNew&&!act(B))return 'الذكر ده مستبعد أو نافق';
+if(r.r2&&r.r1!=='عشار')return 'الجسة الثانية تُسجَّل بعد أن تكون الأولى «عشار»';
+if(bd!=null&&bd<d)return 'تاريخ الولادة قبل تاريخ التلقيح';
+if(bd!=null&&r.r1==='فاضي')return 'لا يمكن تسجيل ولادة لتلقيح نتيجته «فاضي»';
+if(bd!=null&&r.r2==='أجهضت')return 'لا يمكن تسجيل ولادة لحالة «أجهضت»';
+if((r.al!=null||r.dd!=null||wd!=null||r.wc!=null)&&bd==null)return 'سجّل تاريخ الولادة أولًا';
+if((wd!=null)!==(r.wc!=null))return 'تاريخ الفطام وعدد المفطومين يُسجَّلان معًا';
+if(wd!=null&&wd<bd)return 'تاريخ الفطام قبل الولادة';
+if(r.wc!=null&&(r.al==null||r.wc>r.al))return 'عدد المفطومين أكبر من المواليد الأحياء';
+if(rows('br').some(x=>x.id!==r.id&&x.m===r.m&&x.d===r.d))return 'في تلقيح مسجل لنفس الأم بنفس التاريخ'}
+if((t==='does'||t==='bucks'||t==='cust')&&isNew&&codes(t)[r.c])return 'الكود/الاسم ده موجود بالفعل';
+if(t==='sales'){if(!(r.n>=1))return 'عدد الأرانب لازم يكون 1 على الأقل';if(!(r.w>0))return 'الوزن لازم يكون أكبر من صفر'}
+if(t==='exp'&&!(r.a>0))return 'المبلغ لازم يكون أكبر من صفر';
+return ''}
+function save(){if(!FS)return;const{t,id}=FS;const r=clean(t,{...collect(t),id:id||undefined});const e=validate(t,r,!id);if(e){$('#er').textContent=e;return}
+if(t==='sales'&&r.cu&&!codes('cust')[r.cu])put('cust',clean('cust',{c:r.cu}));
+put(t,r);closeSheet();toast('تم الحفظ ✓');render()}
+function delRec(){if(!FS||!FS.id)return;const{t,id}=FS,r=byId(t).get(id);if(!r)return;let n=0;
+if(t==='does')n=rows('br').filter(x=>x.m===r.c).length;if(t==='bucks')n=rows('br').filter(x=>x.b===r.c).length;if(t==='cust')n=rows('sales').filter(x=>x.cu===r.c).length;
+if(n){$('#er').textContent=`لا يمكن الحذف لأنه مرتبط بـ ${n} سجل.`+(t==='cust'?'':' غيّر الحالة إلى «مستبعد» بدل الحذف.');return}
+del(t,id);closeSheet();toast('تم الحذف');render()}
+function quickVac(s){const[t,id,f]=s.split('|'),r=byId(t).get(id);if(!r)return;const old=r[f];put(t,{...r,[f]:todayS()});render();
+toast('تم تسجيل التحصين ✓',()=>{const c=byId(t).get(id);if(!c)return;const n={...c};if(old==null)delete n[f];else n[f]=old;put(t,n);render()})}
+function saveCfg(el){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
+if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&/Days$|Age$|Cycle$/.test(k)&&v<1)){toast('قيمة غير صالحة');return render()}
+if(pct)v/=100;const nc={...S.cfg,[k]:v};if(nc.PoorRatePct>nc.GoodRatePct){toast('نسبة الضعيف لازم تكون أقل من الممتاز');return render()}
+S.cfg=nc;qc();S.v++;toast('تم حفظ الإعداد ✓');render()}
+async function shareFile(name,mime,text,title){const f=new File([text],name,{type:mime});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title});return 1}}catch(e){if(e&&e.name==='AbortError')return 2}
+try{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4e4);return 1}catch(e){return 0}}
+async function doBackup(){const s=JSON.stringify({v:1,at:new Date().toISOString(),cfg:S.cfg,t:Object.fromEntries(Object.keys(S.ch).map(t=>[t,rows(t)]))});
+const r=await shareFile('rabbit-farm-backup-'+todayS()+'.json','application/json',s,'نسخة احتياطية - مزرعة الأرانب');
+if(r===1)toast('تم تجهيز النسخة الاحتياطية ✓');else if(r===0)toast('تعذّر تصدير النسخة')}
+let pend=null;
+function pickFile(f){const rd=new FileReader();rd.onload=()=>{try{pend=importCheck(JSON.parse(rd.result));$('#rsi').innerHTML=`<div class="warn">سيتم استبدال كل البيانات الحالية بـ ${pend.total} سجل من الملف.</div><button class="btn d" data-act="rs">تأكيد الاستبدال</button>`}catch(e){pend=null;$('#rsi').innerHTML=`<div class="er">${esc(e.message||'ملف غير صالح')}</div>`}};rd.onerror=()=>{$('#rsi').innerHTML='<div class="er">تعذّرت قراءة الملف</div>'};rd.readAsText(f)}
+function doRestore(){if(!pend)return;const d=pend;pend=null;S.cfg=d.cfg;for(const t in S.ch){const old=S.ch[t].length;S.ch[t]=pack(d.t[t]);for(let i=0;i<Math.max(old,S.ch[t].length);i++)qd(t,i)}qc();S.v++;toast('تم الاسترجاع ✓');render()}
+function doAct(a,el){if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();
+if(a==='bk')return doBackup();
+if(a==='rs')return doRestore();
+if(a==='pull'){if(!remote){toast('المزامنة مع الحساب غير متاحة الآن');return}setSt('busy');return pull().then(push).then(()=>toast('تمت المزامنة')).catch(netErr)}
+if(a==='rst'){if(!el.dataset.arm){el.dataset.arm='1';el.textContent='اضغط مرة أخرى للتأكيد';setTimeout(()=>{el.dataset.arm='';el.textContent='استرجاع القيم الافتراضية'},3000);return}S.cfg={...DEF};qc();S.v++;toast('تم الاسترجاع');render()}}
+
+/* ---------- phone notifications, calendar, install ---------- */
+const NP=()=>'Notification' in window?Notification.permission:'na';
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='set'&&!FS)render()});addEventListener('appinstalled',()=>{dip=null});
+function notifV(){const p=NP(),ios=/iphone|ipad/i.test(navigator.userAgent);
+const st=p==='granted'?'✅ إشعارات الجوال مفعّلة':p==='denied'?'⛔ الإشعارات مرفوضة — فعّلها من إعدادات الجوال':'🔕 الإشعارات غير مفعّلة';
+return `<h3>التنبيهات على الجوال</h3><div class="cd"><b>${st}</b><div class="mu">${ios&&!standalone()?'على الآيفون: ثبّت التطبيق الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة عشان الإشعارات تشتغل.':'بيوصلك إشعار بالمواعيد العاجلة لما تفتح التطبيق، وكمان كل يوم تلقائيًا على أندرويد.'}</div></div><div class="acts"><button class="btn" data-act="nf">تفعيل الإشعارات</button><button class="btn s" data-act="nt">إشعار تجريبي</button></div>
+<div class="cd"><b>📅 منبهات تشتغل والتطبيق مقفول</b><div class="mu">ضيف مواعيد الجسات والولادة والفطام والتحصينات (لـ 45 يوم جاي) لتقويم الجوال، فيرن عليك المنبه الساعة 9 الصبح على أندرويد وآيفون. كرّرها كل شهر أو بعد تسجيل تلقيحات جديدة.</div></div><div class="acts"><button class="btn" data-act="ics">إضافة المواعيد للتقويم</button></div>
+<div class="acts"><button class="btn s" data-act="shr">مشاركة التطبيق</button>${dip?'<button class="btn s" data-act="ins">تثبيت التطبيق</button>':''}</div>`}
+async function installApp(){if(!dip)return;dip.prompt();await dip.userChoice.catch(()=>0);dip=null;render()}
+async function shareApp(){const u=location.href.split('#')[0];try{if(navigator.share)await navigator.share({title:'مزرعة الأرانب',text:'تطبيق متابعة مزرعة الأرانب',url:u});else{await navigator.clipboard.writeText(u);toast('اتنسخ رابط التطبيق')}}catch(e){}}
+async function reg2(){try{const r=await navigator.serviceWorker.ready;if(r.periodicSync)await r.periodicSync.register('rf-daily',{minInterval:12*36e5})}catch(e){}}
+async function enableNotif(){if(!('Notification' in window)){toast('المتصفح ده مش بيدعم الإشعارات');return}
+try{const p=await Notification.requestPermission();if(p==='granted'){reg2();notifyDue(1)}else toast('لم يتم السماح بالإشعارات')}catch(e){toast('تعذّر تفعيل الإشعارات')}render()}
+async function notifyDue(force){if(NP()!=='granted'){if(force)toast('فعّل الإشعارات أولًا');return}
+const body=Core.dueText(alerts(view(),S.cfg,T0()));if(!body&&!force)return;
+if(!force){try{if(localStorage.rf_nd===todayS())return;localStorage.rf_nd=todayS()}catch(e){}}
+const o={body:body||'مفيش حالات عاجلة النهاردة ✓',tag:'rf-daily',icon:'icon-192.png',badge:'icon-192.png',lang:'ar',dir:'rtl'};
+try{const r=await navigator.serviceWorker.ready;await r.showNotification('🐇 مزرعة الأرانب',o)}catch(e){try{new Notification('🐇 مزرعة الأرانب',o)}catch(_){}}}
+async function exportIcs(){const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',Core.ics(view(),S.cfg,T0()),'مواعيد مزرعة الأرانب');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{const el=e.target.closest('[data-open],[data-add],[data-sub],[data-more],[data-vac],[data-go],[data-tab],[data-act],#shx,#sv,#dl,#sheet');if(!el)return;const d=el.dataset;
+if(el.id==='sheet'){if(e.target===el)closeSheet();return}
+if(el.id==='shx')return closeSheet();if(el.id==='sv')return save();
+if(el.id==='dl'){if(el.dataset.arm)return delRec();el.dataset.arm='1';el.textContent='اضغط مرة أخرى للتأكيد';setTimeout(()=>{el.dataset.arm='';el.textContent='حذف'},3000);return}
+if(d.tab)return go(d.tab);
+if(d.sub){sub[tab]=d.sub;q='';flt='';pg=1;return render()}
+if(d.go){const[a,b,c]=d.go.split('|');return go(a,b,c)}
+if(d.more){pg++;return fillList()}
+if(d.add)return openForm(d.add);
+if(d.open){const[t,id]=d.open.split('|');return openForm(t,id)}
+if(d.vac)return quickVac(d.vac);
+if(d.act)return doAct(d.act,el)});
+let qt=0;
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg)saveCfg(t);else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;notifyDue();if(!FS)render();if(remote&&!pushing)pull().then(push).catch(netErr)});
+addEventListener('online',()=>{if(remote)pull().then(push).catch(netErr)});
+window.RF={S,put,go,render,openForm,save,rows,fillList};
+render();boot().then(()=>{if(NP()==='granted'){reg2();notifyDue()}}).catch(()=>0);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>0));
+})();
+</script>
+</body>
+</html>
