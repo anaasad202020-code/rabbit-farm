@@ -77,14 +77,14 @@ const{M,B}=stats(S.br,c);const bad=(L,X)=>L.filter(a=>act(a)&&X[a.c]&&X[a.c].rat
 return{rev,exp,net:rev-exp,ry,ey,ny:ry-ey,avgM:(ry-ey)/mo,cpk:kg>0?exp/kg:null,wp:wA>0?wS/wA:null,weaned:wS,kg,matings:S.br.length,activeDoes:S.does.filter(act).length,activeBucks:S.bucks.filter(act).length,badDoes:bad(S.does,M),badBucks:bad(S.bucks,B),years:Object.keys(yr).filter(k=>k).sort().reverse().map(k=>({y:k,...yr[k],net:yr[k].rev-yr[k].exp}))}}
 function pack(rows){const o=[];for(let i=0;i<rows.length;i+=CH)o.push(rows.slice(i,i+CH));return o.length?o:[[]]}
 function importCheck(o){if(!o||typeof o!=='object'||o.v!==1||!o.t||typeof o.t!=='object')throw new Error('الملف ليس نسخة احتياطية صالحة');
-const t={};let total=0;
+const t={};let total=0,dropped=0;
 for(const k in SCHEMA){const src=o.t[k];t[k]=[];if(src==null)continue;if(!Array.isArray(src))throw new Error('بيانات «'+k+'» تالفة');
 const ids=new Set(),codes=new Set(),keyed=k==='does'||k==='bucks'||k==='cust';
-for(const x of src){if(!x||typeof x!=='object')continue;const r=clean(k,x);if(SCHEMA[k].some(f=>f[3]&&r[f[0]]==null))continue;
-if(keyed){if(codes.has(r.c))continue;codes.add(r.c)}if(ids.has(r.id))r.id=uid();ids.add(r.id);t[k].push(r)}
+for(const x of src){if(!x||typeof x!=='object'){dropped++;continue}const r=clean(k,x);if(SCHEMA[k].some(f=>f[3]&&r[f[0]]==null)){dropped++;continue}
+if(keyed){if(codes.has(r.c)){dropped++;continue}codes.add(r.c)}if(ids.has(r.id))r.id=uid();ids.add(r.id);t[k].push(r)}
 total+=t[k].length}
 const cfg={...DEF};if(o.cfg&&typeof o.cfg==='object')for(const k in DEF){const v=Number(o.cfg[k]);if(isFinite(v)&&v>=0)cfg[k]=v}
-return{cfg,t,total}}
+return{cfg,t,total,dropped}}
 
 function dueText(A){const p=[];if(A.urgent.length)p.push('🔴 '+A.urgent.length+' حالة تحتاج إجراء اليوم');if(A.soon.length)p.push('🟡 '+A.soon.length+' قريبة من موعدها');if(A.late)p.push('💉 '+A.late+' تحصين متأخر');return p.join('\n')}
 function ics(S,c,T){const H=45,g=Object.create(null),p2=n=>String(n).padStart(2,'0'),dt=n=>{const d=new Date(n*864e5);return d.getUTCFullYear()+p2(d.getUTCMonth()+1)+p2(d.getUTCDate())},tx=s=>String(s).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');

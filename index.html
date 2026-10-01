@@ -94,7 +94,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='8';
+const VER='10';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -115,7 +115,8 @@ const view=()=>({does:rows('does'),bucks:rows('bucks'),br:rows('br'),sales:rows(
 
 /* ---------- storage: IndexedDB (device) + db capability (account) ---------- */
 let IDB=null,remote=null,pushing=false,timer=0,rt=0,retry=0,cur='loc',note='';
-const dirty=new Map(),revs={};
+const dirty=new Map(),revs={},inflight={};let ready=false;
+const bc=(()=>{try{return new BroadcastChannel('rf-sync')}catch(e){return null}})();
 const idbOpen=()=>new Promise((res,rej)=>{try{const q=indexedDB.open('rabbitfarm',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}});
 const idbAll=()=>new Promise((res,rej)=>{const q=IDB.transaction('kv').objectStore('kv').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
 const idbPut=v=>new Promise((res,rej)=>{const t=IDB.transaction('kv','readwrite');t.objectStore('kv').put(v);t.oncomplete=res;t.onerror=t.onabort=()=>rej(t.error)});
@@ -123,7 +124,7 @@ const SM={ok:['✓ محفوظ ومتزامن','g'],busy:['… جارٍ الحف�
 function setSt(k,m){if(k==='loc'&&!IDB)k='err';cur=k;note=m||'';const p=$('#sync');p.textContent=m||SM[k][0];p.className='pill c-'+SM[k][1]}
 function applyDoc(d){if(d.id==='cfg'){S.cfg={...DEF,...d.cfg}}else if(S.ch[d.k]&&Number.isInteger(d.n)&&d.n>=0&&d.n<5000){const a=S.ch[d.k];while(a.length<=d.n)a.push([]);a[d.n]=Array.isArray(d.rows)?d.rows:[]}}
 const stamp=id=>{const r=Math.max(Date.now(),(revs[id]||0)+1);revs[id]=r;return r};
-function enqueue(d){dirty.set(d.id,d);if(IDB)idbPut({...d,dirty:1}).catch(()=>setSt('err','تعذّر الحفظ على الجهاز'));clearTimeout(timer);timer=setTimeout(push,700);if(cur!=='err')setSt(remote?'busy':'loc')}
+function enqueue(d){dirty.set(d.id,d);if(IDB){inflight[d.id]=(inflight[d.id]||0)+1;idbPut({...d,dirty:1}).then(()=>{if(!remote&&dirty.get(d.id)===d)dirty.delete(d.id);try{bc&&bc.postMessage(1)}catch(e){}}).catch(()=>{setSt('err','تعذّر الحفظ على الجهاز');toast('⚠ تعذّر الحفظ على الجهاز — خد نسخة احتياطية')}).finally(()=>{if(--inflight[d.id]<=0)delete inflight[d.id]})}clearTimeout(timer);timer=setTimeout(push,700);if(cur!=='err')setSt(remote?'busy':'loc')}
 const qd=(t,ci)=>{const id=t+'-'+ci;enqueue({id,k:t,n:ci,rev:stamp(id),rows:(S.ch[t][ci]||[]).slice()})};
 const qc=()=>enqueue({id:'cfg',k:'cfg',rev:stamp('cfg'),cfg:{...S.cfg}});
 const bodyOf=d=>d.k==='cfg'?{k:'cfg',rev:d.rev,cfg:d.cfg}:{k:d.k,n:d.n,rev:d.rev,rows:d.rows};
@@ -137,17 +138,20 @@ const d={id:s.id,...b};applyDoc(d);revs[s.id]=b.rev;if(IDB)idbPut({...d,dirty:0}
 for(const t in S.ch)S.ch[t].forEach((rs,i)=>{const id=t+'-'+i;if(!have.has(id)&&rs.length&&!dirty.has(id))qd(t,i)});
 if(!have.has('cfg')&&revs.cfg!=null&&!dirty.has('cfg'))qc();
 if(ch){S.v++;if(!FS)render()}}
+async function syncFromIdb(){if(!IDB||!ready)return;try{let ch=false;for(const d of await idbAll()){if(inflight[d.id]||(remote&&dirty.has(d.id)))continue;if((revs[d.id]||0)>=d.rev)continue;applyDoc(d);revs[d.id]=d.rev;ch=true}if(ch){S.v++;if(!FS)render()}}catch(e){}}
+if(bc)bc.onmessage=()=>syncFromIdb();
+addEventListener('pageshow',()=>syncFromIdb());addEventListener('focus',()=>syncFromIdb());
 async function boot(){
-try{IDB=await idbOpen();for(const d of await idbAll()){applyDoc(d);revs[d.id]=d.rev;if(d.dirty)dirty.set(d.id,d)}}catch(e){IDB=null}
-S.v++;render();
+try{IDB=await Promise.race([idbOpen(),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),8000))]);for(const d of await idbAll()){applyDoc(d);revs[d.id]=d.rev;if(d.dirty)dirty.set(d.id,d)}}catch(e){IDB=null}
+ready=true;S.v++;render();
 try{remote=window.claude&&claude.use?await claude.use('db'):null}catch(e){remote=null}
 if(remote){setSt('busy');try{await pull();await push()}catch(e){netErr(e)}}else setSt(dirty.size||IDB?'loc':'err')}
 
 /* ---------- data ops ---------- */
 function locate(t,id){const a=S.ch[t];for(let i=0;i<a.length;i++){const j=a[i].findIndex(x=>x.id===id);if(j>=0)return[i,j]}return null}
 function touch(t,ci){const ch=S.ch[t][ci];if(ch.length>1&&JSON.stringify(ch).length>120000){const h=ch.splice(ch.length>>1);S.ch[t].push(h);qd(t,S.ch[t].length-1)}qd(t,ci);S.v++}
-function put(t,r){const p=locate(t,r.id);let ci;if(p){S.ch[t][p[0]][p[1]]=r;ci=p[0]}else{const a=S.ch[t];let l=a[a.length-1];if(!l||l.length>=CH){l=[];a.push(l)}l.push(r);ci=a.length-1}touch(t,ci)}
-function del(t,id){const p=locate(t,id);if(!p)return;S.ch[t][p[0]].splice(p[1],1);touch(t,p[0])}
+function put(t,r){if(!ready){toast('استنى لحظة… التطبيق بيحمّل بياناتك');return}const p=locate(t,r.id);let ci;if(p){S.ch[t][p[0]][p[1]]=r;ci=p[0]}else{const a=S.ch[t];let l=a[a.length-1];if(!l||l.length>=CH){l=[];a.push(l)}l.push(r);ci=a.length-1}touch(t,ci)}
+function del(t,id){if(!ready){toast('استنى لحظة… التطبيق بيحمّل بياناتك');return}const p=locate(t,id);if(!p)return;S.ch[t][p[0]].splice(p[1],1);touch(t,p[0])}
 
 /* ---------- ui helpers ---------- */
 let tt=0;
@@ -166,7 +170,7 @@ return `<div class="cd"><div class="row"><b>${esc(a.c)}</b><span class="mu">${t=
 function todayV(){const c=S.cfg,T=T0();const A=memo('al'+todayS(),()=>alerts(view(),c,T));
 let dt=todayS();try{dt=new Date().toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}catch(e){}
 const k=(n,l,x)=>`<div class="k c-${x}"><b>${n}</b><span>${l}</span></div>`;
-let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.urgent.length?A.urgent.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.urgent.length,'عاجل','r')}${k(A.soon.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>`;
+let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.urgent.length?A.urgent.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.urgent.length,'عاجل','r')}${k(A.soon.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>${bkWarn()}`;
 if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «الحيوانات».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
 const sec=(ti,L,fn,g)=>L.length?`<h3>${ti} <small>${L.length}</small></h3>${L.slice(0,20).map(fn).join('')}${L.length>20&&g?`<button class="lnk" data-go="${g}">عرض الكل (${L.length})</button>`:''}`:'';
 h+=sec('🔴 يحتاج إجراء اليوم',A.urgent,x=>brCard(x),'br||u')+sec('🟡 قريب من موعده',A.soon,x=>brCard(x),'br||s')+sec('💉 تحصينات متأخرة أو قريبة',A.vacs,x=>vacCard(x.a,x.t,x.b,x.v),'an|vac|l')+sec('⚠️ تنبيهات قرابة',A.kins,x=>brCard(x,'قرابة قريبة محتملة'),'')+sec('🐰 أمهات جاهزة للتلقيح الأول',A.ready,x=>`<button class="cd" data-open="does|${x.a.id}"><b>${esc(x.a.c)}</b><span class="mu"> · جاهزة من ${F(x.from)}</span></button>`,'');
@@ -199,11 +203,12 @@ function setV(){const ts=Object.keys(S.ch).map(t=>[t,rows(t).length]);const kb=M
 const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وعلى حسابك.':cur==='busy'?'جارٍ الحفظ…':cur==='loc'?'كل البيانات محفوظة على جهازك وتشتغل بدون إنترنت. خد نسخة احتياطية كل فترة وابعتها لنفسك.':'تعذّر الحفظ — نزّل نسخة احتياطية الآن.';
 return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
 <div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>
-${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button></div>`}
+${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">آخر نسخة احتياطية: ${(()=>{const a=bkAge();return a?new Date(a.l).toLocaleDateString('ar-EG-u-nu-latn'):'لسه'})()}</div><div class="mu">التخزين الدائم: <span id="pst">…</span></div><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button></div>`}
 function render(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
 $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
+if(!ready){$('#main').innerHTML='<div class="empty">جارٍ التحميل…</div>';return}
 const t=curT();let h=SUBS[tab]?`<div class="seg">${SUBS[tab].map(([k,l])=>`<button data-sub="${k}" class="${sub[tab]===k?'on':''}">${l}</button>`).join('')}</div>`:'';
-h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):sumV();$('#main').innerHTML=h;if(t)fillList()}
+h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):sumV();$('#main').innerHTML=h;if(t)fillList();if(tab==='set')try{navigator.storage.persisted().then(p=>{const e=$('#pst');if(e)e.textContent=p?'✓ مفعّل':'غير مفعّل — خد نسخة احتياطية بانتظام'})}catch(e){}}
 
 /* ---------- forms ---------- */
 function optList(t,k){if(t==='br'&&k==='m')return rows('does').filter(act).map(x=>x.c);if(t==='br'&&k==='b')return rows('bucks').filter(act).map(x=>x.c);if(t==='sales'&&k==='cu')return rows('cust').map(x=>x.c);return[]}
@@ -266,11 +271,14 @@ S.cfg=nc;qc();S.v++;toast('تم حفظ الإعداد ✓');render()}
 async function shareFile(name,mime,text,title){const f=new File([text],name,{type:mime});
 try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title});return 1}}catch(e){if(e&&e.name==='AbortError')return 2}
 try{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4e4);return 1}catch(e){return 0}}
+function bkAge(){try{const l=+localStorage.getItem('rf_bk')||0;return l?{l,d:Math.floor((Date.now()-l)/864e5)}:null}catch(e){return null}}
+function bkWarn(){const n=['does','bucks','br','sales','exp'].reduce((a,t)=>a+rows(t).length,0);if(n<5)return'';const a=bkAge();if(a&&a.d<14)return'';
+return `<div class="cd"><b>⚠ ${a?'آخر نسخة احتياطية من '+a.d+' يوم':'لسه ما أخدتش نسخة احتياطية'}</b><div class="mu">خد نسخة عشان بياناتك تفضل في أمان لو حصل أي حاجة للتليفون.</div></div><div class="acts"><button class="btn" data-act="bk">نسخة احتياطية الآن</button></div>`}
 async function doBackup(){const s=JSON.stringify({v:1,at:new Date().toISOString(),cfg:S.cfg,t:Object.fromEntries(Object.keys(S.ch).map(t=>[t,rows(t)]))});
 const r=await shareFile('rabbit-farm-backup-'+todayS()+'.json','application/json',s,'نسخة احتياطية - Rabbit Farm');
-if(r===1)toast('تم تجهيز النسخة الاحتياطية ✓');else if(r===0)toast('تعذّر تصدير النسخة')}
+if(r===1){try{localStorage.setItem('rf_bk',String(Date.now()))}catch(e){}toast('تم تجهيز النسخة الاحتياطية ✓')}else if(r===0)toast('تعذّر تصدير النسخة')}
 let pend=null;
-function pickFile(f){const rd=new FileReader();rd.onload=()=>{try{pend=importCheck(JSON.parse(rd.result));$('#rsi').innerHTML=`<div class="warn">سيتم استبدال كل البيانات الحالية بـ ${pend.total} سجل من الملف.</div><button class="btn d" data-act="rs">تأكيد الاستبدال</button>`}catch(e){pend=null;$('#rsi').innerHTML=`<div class="er">${esc(e.message||'ملف غير صالح')}</div>`}};rd.onerror=()=>{$('#rsi').innerHTML='<div class="er">تعذّرت قراءة الملف</div>'};rd.readAsText(f)}
+function pickFile(f){const rd=new FileReader();rd.onload=()=>{try{pend=importCheck(JSON.parse(rd.result));$('#rsi').innerHTML=`<div class="warn">سيتم استبدال كل البيانات الحالية بـ ${pend.total} سجل من الملف.</div>${pend.dropped?`<div class="er">⚠ ${pend.dropped} سجل في الملف ناقص أو غير صالح وهيتم تجاهله.</div>`:''}<button class="btn d" data-act="rs">تأكيد الاستبدال</button>`}catch(e){pend=null;$('#rsi').innerHTML=`<div class="er">${esc(e.message||'ملف غير صالح')}</div>`}};rd.onerror=()=>{$('#rsi').innerHTML='<div class="er">تعذّرت قراءة الملف</div>'};rd.readAsText(f)}
 function doRestore(){if(!pend)return;const d=pend;pend=null;S.cfg=d.cfg;for(const t in S.ch){const old=S.ch[t].length;S.ch[t]=pack(d.t[t]);for(let i=0;i<Math.max(old,S.ch[t].length);i++)qd(t,i)}qc();S.v++;toast('تم الاسترجاع ✓');render()}
 function saveAllCfg(){const nc={...S.cfg};
 for(const el of document.querySelectorAll('[data-cfg]')){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
@@ -335,7 +343,7 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closes
 let qt=0;
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)return;notifyDue();if(!FS)render();if(remote&&!pushing)pull().then(push).catch(netErr)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;syncFromIdb();notifyDue();if(!FS)render();if(remote&&!pushing)pull().then(push).catch(netErr)});
 addEventListener('online',()=>{if(remote)pull().then(push).catch(netErr)});
 window.RF={S,put,go,render,openForm,save,rows,fillList};
 render();boot().then(()=>{if(NP()==='granted'){reg2();notifyDue()}}).catch(()=>0);
