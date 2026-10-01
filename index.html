@@ -94,7 +94,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='10';
+const VER='11';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -103,7 +103,7 @@ const T0=()=>D(todayS());
 const NM={br:'تلقيح',does:'أم',bucks:'ذكر',sales:'عملية بيع',exp:'مصروف',cust:'زبون'};
 const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','الحيوانات','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
 const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
-const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
+const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['MaxBirthDays','أقصى مدة من التلقيح للولادة (للتحقق)','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
 let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null;
 const S={cfg:{...DEF},ch:{},v:0};for(const t in SCHEMA)S.ch[t]=[[]];
 const C={};const memo=(k,fn)=>{const e=C[k];if(e&&e.v===S.v)return e.r;const r=fn();C[k]={v:S.v,r};return r};
@@ -231,18 +231,26 @@ showSheet();pv()}
 function pv(){if(!FS)return;const{t,id}=FS,c=S.cfg,T=T0(),r=clean(t,{...collect(t),id:id||'x'});let h='';
 const L=(l,n)=>n==null||n===''?'':`<div><span>${l}</span><b>${n}</b></div>`;
 if(t==='br'){const o=calc(r,c,T);h=L('الجسة الأولى',F(o.t1))+L('الجسة الثانية',F(o.t2))+L('الولادة المتوقعة',F(o.exp))+L('حقنة المضاد الحيوي',F(o.ab))+L('حقنة الفيتامين',F(o.vit))+L('الفطام المتوقع',F(o.wean))+L('إجمالي المواليد',o.tot)+L('نافق أثناء الرضاعة',o.died)+L('نسبة الفطام',o.wp==null?'':pc(o.wp))+(o.st?`<div><span>الحالة</span><b class="ch c-${o.st[1]}">${o.st[0]}</b></div>`:'');
-if(kin(r,codes('does'),codes('bucks'))==='w')h+='<div class="warn">⚠️ قرابة قريبة محتملة (جيل واحد) - راجع قبل التلقيح</div>'}
+if(kin(r,codes('does'),codes('bucks'))==='w')h+='<div class="warn">⚠️ قرابة قريبة محتملة (جيل واحد) - راجع قبل التلقيح</div>';const old=id?byId(t).get(id):null,de=brDateErr(r,old);if(de)h+='<div class="er">'+esc(de)+'</div>'}
 else if(t==='sales'){if(r.w!=null&&r.p!=null)h=L('المبلغ الإجمالي',money(saleTotal(r)))+(r.n?L('متوسط وزن الأرنب',R2(r.w/r.n)+' كجم'):'')}
 else if((t==='does'||t==='bucks')&&id){const x=ST()[t==='does'?'M':'B'][r.c]||Core.empty(c);const b=D(r.bd);
 h=(t==='does'&&b!=null?L('جاهزة للتلقيح الأول من',F(b+c.FirstMatingAge)):'')+L('عدد التلقيحات',x.n)+L('نسبة نجاح التلقيح',pc(x.sr))+L('الولادات الفعلية',x.b)+L('متوسط المواليد الأحياء',x.avgAl==null?'—':R2(x.avgAl))+L('متوسط المفطومين',x.avgWc==null?'—':R2(x.avgWc))+L('نسبة الفطام',pc(x.wp))+L(t==='does'?'آخر تلقيح':'آخر استخدام',F(x.last)||'—')+`<div><span>التقييم</span><b class="ch c-${x.rate[1]}">${x.rate[0]}</b></div>`}
 $('#pv').innerHTML=h}
-function validate(t,r,isNew){const T=T0();
+function brDateErr(r,old){const c=S.cfg,T=T0(),d=D(r.d);if(d==null)return'';
+const chg=k=>!old||String(old[k]??'')!==String(r[k]??''),dch=chg('d');
+if(r.r1&&(chg('r1')||dch)&&T<d+c.FirstTestDays)return `لسه ما عدّاش ${c.FirstTestDays} يوم من تاريخ التلقيح — تقدر تسجّل الجسة الأولى من ${F(d+c.FirstTestDays)}`;
+if(r.r2&&r.r2!=='أجهضت'&&(chg('r2')||dch)&&T<d+c.SecondTestDays)return `لسه ما عدّاش ${c.SecondTestDays} يوم من تاريخ التلقيح — تقدر تسجّل الجسة التانية من ${F(d+c.SecondTestDays)}`;
+const bd=D(r.bd);if(bd!=null&&(chg('bd')||dch)&&bd>d+c.MaxBirthDays)return `تاريخ الولادة بعد أكتر من ${c.MaxBirthDays} يوم من التلقيح — آخر تاريخ مقبول ${F(d+c.MaxBirthDays)}`;
+return ''}
+function validate(t,r,isNew,old){const T=T0();
 for(const f of SCHEMA[t])if(f[3]&&r[f[0]]==null)return `«${f[1]}» مطلوب`;
 for(const f of SCHEMA[t])if(f[2]==='date'&&r[f[0]]&&D(r[f[0]])>T)return `«${f[1]}» لا يمكن أن يكون في المستقبل`;
 if(t==='br'){const d=D(r.d),bd=D(r.bd),wd=D(r.wd),M=codes('does')[r.m],B=codes('bucks')[r.b];
 if(!M)return 'كود الأم غير موجود — أضفها من «الحيوانات» أولًا';if(!B)return 'كود الذكر غير موجود — أضفه من «الحيوانات» أولًا';
 if(isNew&&!act(M))return 'الأم دي مستبعدة أو نافقة';if(isNew&&!act(B))return 'الذكر ده مستبعد أو نافق';
 if(r.r2&&r.r1!=='عشار')return 'الجسة الثانية تُسجَّل بعد أن تكون الأولى «عشار»';
+const de=brDateErr(r,old);if(de)return de;
+if((r.al!=null&&r.al>25)||(r.dd!=null&&r.dd>25))return 'عدد المواليد كبير جدًا (أقصى 25) — راجع الرقم';
 if(bd!=null&&bd<d)return 'تاريخ الولادة قبل تاريخ التلقيح';
 if(bd!=null&&r.r1==='فاضي')return 'لا يمكن تسجيل ولادة لتلقيح نتيجته «فاضي»';
 if(bd!=null&&r.r2==='أجهضت')return 'لا يمكن تسجيل ولادة لحالة «أجهضت»';
@@ -255,7 +263,7 @@ if((t==='does'||t==='bucks'||t==='cust')&&isNew&&codes(t)[r.c])return 'الكو�
 if(t==='sales'){if(!(r.n>=1))return 'عدد الأرانب لازم يكون 1 على الأقل';if(!(r.w>0))return 'الوزن لازم يكون أكبر من صفر'}
 if(t==='exp'&&!(r.a>0))return 'المبلغ لازم يكون أكبر من صفر';
 return ''}
-function save(){if(!FS)return;const{t,id}=FS;const r=clean(t,{...collect(t),id:id||undefined});const e=validate(t,r,!id);if(e){$('#er').textContent=e;return}
+function save(){if(!FS)return;const{t,id}=FS;const r=clean(t,{...collect(t),id:id||undefined});const e=validate(t,r,!id,id?byId(t).get(id):null);if(e){$('#er').textContent=e;return}
 if(t==='sales'&&r.cu&&!codes('cust')[r.cu])put('cust',clean('cust',{c:r.cu}));
 put(t,r);closeSheet();toast('تم الحفظ ✓');render()}
 function delRec(){if(!FS||!FS.id)return;const{t,id}=FS,r=byId(t).get(id);if(!r)return;let n=0;
@@ -284,6 +292,7 @@ function saveAllCfg(){const nc={...S.cfg};
 for(const el of document.querySelectorAll('[data-cfg]')){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
 if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&/Days$|Age$|Cycle$/.test(k)&&v<1)){const f=CFGL.find(x=>x[0]===k);toast('قيمة غير صالحة: '+(f?f[1]:k));return}nc[k]=pct?v/100:v}
 if(nc.PoorRatePct>nc.GoodRatePct){toast('نسبة الضعيف لازم تكون أقل من الممتاز');return}
+if(nc.MaxBirthDays<nc.GestationDays){toast('أقصى مدة للولادة لازم تكون أكبر من أو تساوي مدة الحمل');return}
 S.cfg=nc;qc();S.v++;toast('تم حفظ الإعدادات ✓');render()}
 async function updateApp(){toast('جارٍ التحديث…');try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.reload()}
 function doAct(a,el){if(a==='upd')return updateApp();if(a==='svc')return saveAllCfg();if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();

@@ -1,7 +1,7 @@
 var Core=(function(){
 'use strict';
 const P='عشار',E='فاضي',AB='أجهضت';
-const DEF={FirstTestDays:10,SecondTestDays:21,GestationDays:31,WeaningAge:35,BacterialVaccineCycle:90,ViralVaccineCycle:180,AlertWindow:3,TargetSaleWeight:2,FirstMatingAge:150,MinAttempts:2,GoodRatePct:.75,PoorRatePct:.5};
+const DEF={FirstTestDays:10,SecondTestDays:21,GestationDays:31,MaxBirthDays:35,WeaningAge:35,BacterialVaccineCycle:90,ViralVaccineCycle:180,AlertWindow:3,TargetSaleWeight:2,FirstMatingAge:150,MinAttempts:2,GoodRatePct:.75,PoorRatePct:.5};
 const CH=250;
 const SRC=['','من المزرعة','من الخارج'];
 const AN=(s,l)=>[['c',l,'txt',1],['bd','تاريخ الميلاد/الإدخال','date'],['sl','السلالة','txt'],['s','الحالة',s],['src','المصدر',SRC],['gm','كود الأم الوالدة (الجدة)','txt'],['gf','كود الأب الوالد (الجد)','txt'],['vb','آخر تحصين بكتيري','date'],['vv','آخر تحصين فيروسي','date'],['nt','ملاحظات','txt']];
