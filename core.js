@@ -42,14 +42,14 @@ if(al!=null||dd!=null)o.tot=(al||0)+(dd||0);
 if(bd!=null){o.ab=bd;o.vit=bd+1;o.wean=bd+c.WeaningAge}
 if(al!=null&&wc!=null){o.died=al-wc;o.wp=al>0?wc/al:null}
 o.st=status(r,o,bd,wd,c,T);return o}
-function rate(a,c){if(a.n<Math.max(1,c.MinAttempts))return['⏳ بيانات غير كافية بعد','n'];const sr=a.sr,wp=a.wp;
+function rate(a,c){if((a.nt||0)<Math.max(1,c.MinAttempts))return['⏳ بيانات غير كافية بعد','n'];const sr=a.sr,wp=a.wp;
 if(sr<c.PoorRatePct||(wp!=null&&wp<c.PoorRatePct))return['⚠️ ضعيفة - تحتاج مراجعة','o'];
 if(sr>=c.GoodRatePct&&(wp==null||wp>=c.GoodRatePct))return['✅ ممتازة','ok'];return['🟡 متوسطة','y']}
-const empty=c=>({n:0,s:0,b:0,sr:null,wp:null,avgAl:null,avgWc:null,last:null,rate:rate({n:0},c)});
+const empty=c=>({n:0,nt:0,s:0,b:0,sr:null,wp:null,avgAl:null,avgWc:null,last:null,rate:rate({nt:0},c)});
 function stats(br,c){const M=Object.create(null),B=Object.create(null);
-const add=(m,k,r,d,al,wc)=>{if(!k)return;const a=m[k]||(m[k]={n:0,s:0,b:0,aS:0,aN:0,wS:0,wN:0,wA:0,last:null});a.n++;if(r.r1===P)a.s++;if(D(r.bd)!=null)a.b++;if(al!=null){a.aS+=al;a.aN++}if(wc!=null){a.wS+=wc;a.wN++;a.wA+=al||0}if(d!=null&&(a.last==null||d>a.last))a.last=d};
+const add=(m,k,r,d,al,wc)=>{if(!k)return;const a=m[k]||(m[k]={n:0,nt:0,s:0,b:0,aS:0,aN:0,wS:0,wN:0,wA:0,last:null});a.n++;if(r.r1)a.nt++;if(r.r1===P)a.s++;if(D(r.bd)!=null)a.b++;if(al!=null){a.aS+=al;a.aN++}if(wc!=null){a.wS+=wc;a.wN++;a.wA+=al||0}if(d!=null&&(a.last==null||d>a.last))a.last=d};
 for(const r of br){const d=D(r.d),al=num(r.al),wc=num(r.wc);add(M,r.m,r,d,al,wc);add(B,r.b,r,d,al,wc)}
-for(const m of[M,B])for(const k in m){const a=m[k];a.sr=a.n?a.s/a.n:null;a.avgAl=a.aN?a.aS/a.aN:null;a.avgWc=a.wN?a.wS/a.wN:null;a.wp=a.wA>0?a.wS/a.wA:null;a.rate=rate(a,c)}
+for(const m of[M,B])for(const k in m){const a=m[k];a.sr=a.nt?a.s/a.nt:null;a.avgAl=a.aN?a.aS/a.aN:null;a.avgWc=a.wN?a.wS/a.wN:null;a.wp=a.wA>0?a.wS/a.wA:null;a.rate=rate(a,c)}
 return{M,B}}
 function vac(last,cycle,c,T){const l=D(last);if(l==null)return{next:null,st:['⚪ لم يُسجَّل تحصين بعد','n']};const nx=l+cycle;
 if(T>=nx)return{next:nx,st:['🔴 متأخر - حصّن الآن','r']};if(T>=nx-c.AlertWindow)return{next:nx,st:['🟡 قرب موعده','y']};return{next:nx,st:['🟢 لسه بدري','g']}}
@@ -84,9 +84,10 @@ for(const x of src){if(!x||typeof x!=='object'){dropped++;continue}const r=clean
 if(keyed){if(codes.has(r.c)){dropped++;continue}codes.add(r.c)}if(ids.has(r.id))r.id=uid();ids.add(r.id);t[k].push(r)}
 total+=t[k].length}
 const cfg={...DEF};if(o.cfg&&typeof o.cfg==='object')for(const k in DEF){const v=Number(o.cfg[k]);if(isFinite(v)&&v>=0)cfg[k]=v}
-return{cfg,t,total,dropped}}
+return{cfg,t,total,dropped,at:typeof o.at==='string'?o.at.slice(0,10):''}}
 
 function dueText(A){const p=[];if(A.urgent.length)p.push('🔴 '+A.urgent.length+' حالة تحتاج إجراء اليوم');if(A.soon.length)p.push('🟡 '+A.soon.length+' قريبة من موعدها');if(A.late)p.push('💉 '+A.late+' تحصين متأخر');return p.join('\n')}
+function fold(s){const enc=new TextEncoder();let out='',len=0;for(const ch of s){const n=enc.encode(ch).length;if(len+n>75){out+='\r\n ';len=1}out+=ch;len+=n}return out}
 function ics(S,c,T){const H=45,g=Object.create(null),p2=n=>String(n).padStart(2,'0'),dt=n=>{const d=new Date(n*864e5);return d.getUTCFullYear()+p2(d.getUTCMonth()+1)+p2(d.getUTCDate())},tx=s=>String(s).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');
 const add=(ty,title,day,who,all)=>{if(day==null||(!all&&day<T-30)||day>T+H)return;day=Math.max(day,T);const k=ty+day,e=g[k]||(g[k]={ty,title,day,w:[]});e.w.push(who)};
 for(const r of S.br){const o=calc(r,c,T);if(!o.st)continue;const w=r.m+'×'+r.b;
@@ -98,5 +99,5 @@ for(const[t,L]of[['does',S.does],['bucks',S.bucks]])for(const a of L){if(!act(a)
 const z=new Date().toISOString().replace(/[-:]|\.\d+/g,'');
 const ev=Object.values(g).map(e=>{const s=e.title+' ('+e.w.length+')';return['BEGIN:VEVENT','UID:rf-'+e.ty+'-'+e.day+'@rabbitfarm','DTSTAMP:'+z,'DTSTART:'+dt(e.day)+'T090000','DTEND:'+dt(e.day)+'T093000','SUMMARY:'+tx(s),'DESCRIPTION:'+tx(e.w.join('، ')),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+tx(s),'TRIGGER:PT0S','END:VALARM','END:VEVENT'].join('\r\n')});
 if(!ev.length)return null;
-return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RabbitFarm//AR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n')}
+return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RabbitFarm//AR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n').split('\r\n').map(fold).join('\r\n')+'\r\n'}
 return{DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
