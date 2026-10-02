@@ -1,7 +1,7 @@
 var Core=(function(){
 'use strict';
 const P='عشار',E='فاضي',AB='أجهضت';
-const DEF={FirstTestDays:10,SecondTestDays:21,GestationDays:31,MaxBirthDays:35,WeaningAge:35,BacterialVaccineCycle:90,ViralVaccineCycle:180,AlertWindow:3,TargetSaleWeight:2,FirstMatingAge:150,MinAttempts:2,GoodRatePct:.75,PoorRatePct:.5};
+const DEF={FirstTestDays:10,SecondTestDays:21,GestationDays:31,MaxBirthDays:35,WeaningAge:35,MinWeanDays:28,BacterialVaccineCycle:90,ViralVaccineCycle:180,AlertWindow:3,TargetSaleWeight:2,FirstMatingAge:150,MinAttempts:2,GoodRatePct:.75,PoorRatePct:.5};
 const CH=250;
 const SRC=['','من المزرعة','من الخارج'];
 const AN=(s,l)=>[['c',l,'txt',1],['bd','تاريخ الميلاد/الإدخال','date'],['sl','السلالة','txt'],['s','الحالة',s],['src','المصدر',SRC],['gm','كود الأم الوالدة (الجدة)','txt'],['gf','كود الأب الوالد (الجد)','txt'],['vb','آخر تحصين بكتيري','date'],['vv','آخر تحصين فيروسي','date'],['nt','ملاحظات','txt']];
@@ -100,4 +100,53 @@ const z=new Date().toISOString().replace(/[-:]|\.\d+/g,'');
 const ev=Object.values(g).map(e=>{const s=e.title+' ('+e.w.length+')';return['BEGIN:VEVENT','UID:rf-'+e.ty+'-'+e.day+'@rabbitfarm','DTSTAMP:'+z,'DTSTART:'+dt(e.day)+'T090000','DTEND:'+dt(e.day)+'T093000','SUMMARY:'+tx(s),'DESCRIPTION:'+tx(e.w.join('، ')),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+tx(s),'TRIGGER:PT0S','END:VALARM','END:VEVENT'].join('\r\n')});
 if(!ev.length)return null;
 return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RabbitFarm//AR','CALSCALE:GREGORIAN',...ev,'END:VCALENDAR'].join('\r\n').split('\r\n').map(fold).join('\r\n')+'\r\n'}
-return{DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
+/* ---------- mating cycle: ordered stages, locks and checks ---------- */
+const L2='لسه عشار',has=v=>v!=null&&v!=='';
+const stageOf=x=>(has(x.wd)||has(x.wc))?4:has(x.bd)?3:has(x.r2)?2:has(x.r1)?1:0;
+const isDone=x=>!!x&&(x.r1===E||x.r2===AB||has(x.wd)||(has(x.bd)&&has(x.al)&&Number(x.al)===0));
+const STG={m:0,b:0,d:0,r1:1,r2:2,bd:3,wd:4};
+function brFlow(r,old,c,T){
+const d=D(r.d),bd=D(r.bd),wd=D(r.wd),al=has(r.al)?Number(r.al):null;
+const st=stageOf(r),ost=old?stageOf(old):-1,odone=!!old&&isDone(old),done=isDone(r),left=n=>n-T;
+const lockShort=odone?'🔒 مقفول — الدورة اكتملت':'🔒 مقفول — اتسجّلت مرحلة بعده',lockLong=odone?'مقفول — الدورة اكتملت ومينفعش تعدّل التواريخ والنتائج (الأعداد والملاحظات بس)':'مقفول — سجّلت المرحلة اللي بعده، امسحها الأول لو محتاج تعدّل';
+const f={};
+const fld=(k,gate,gw,counts)=>{const inS=!counts&&k in STG,s=STG[k],fo=inS&&(odone||(!!old&&ost>s)),fl=inS&&st>s;
+f[k]={gate,gateWhy:gate?'':gw,lockWhy:lockLong,frozenOld:fo,frozenLive:fl,ok:gate&&!fo,on:gate&&!fo&&!fl,why:(fo||fl)?lockShort:(gate?'':gw),hint:''}};
+const t1=d==null?null:d+c.FirstTestDays,t2=d==null?null:d+c.SecondTestDays,mw=c.MinWeanDays,tw=bd==null?null:bd+mw;
+fld('m',true,'');fld('b',true,'');fld('d',true,'');
+fld('r1',d!=null&&T>=t1,d==null?'سجّل تاريخ التلقيح الأول':`لسه ما عدّاش ${c.FirstTestDays} يوم من تاريخ التلقيح — تقدر تسجّل الجسة الأولى من ${F(t1)} (باقي ${left(t1)} يوم)`);
+fld('r2',r.r1===P&&d!=null&&T>=t2,r.r1!==P?'الجسة الثانية تُسجَّل بعد أن تكون الأولى «عشار»'+(d!=null&&T<t2?` — ومش قبل يوم ${F(t2)}`:''):d==null?'سجّل تاريخ التلقيح الأول':`لسه ما عدّاش ${c.SecondTestDays} يوم من تاريخ التلقيح — تقدر تسجّل الجسة التانية من ${F(t2)} (باقي ${left(t2)} يوم)`);
+fld('bd',r.r2===L2&&d!=null,r.r1===E?'لا يمكن تسجيل ولادة لتلقيح نتيجته «فاضي»':r.r2===AB?'لا يمكن تسجيل ولادة لحالة «أجهضت»':'سجّل الجسة التانية (لسه عشار) قبل تاريخ الولادة');
+fld('al',bd!=null,'سجّل تاريخ الولادة أولًا',true);fld('dd',bd!=null,'سجّل تاريخ الولادة أولًا',true);
+fld('wd',bd!=null&&al!=null&&al>0&&T>=tw,bd==null?'سجّل تاريخ الولادة أولًا':al==null?'سجّل عدد المواليد الأحياء الأول':al===0?'مفيش مواليد أحياء — مفيش فطام':`لسه ما عدّاش ${mw} يوم من الولادة — تقدر تسجّل الفطام من ${F(tw)} (باقي ${left(tw)} يوم)`);
+fld('wc',wd!=null,'سجّل تاريخ الفطام أولًا',true);fld('nt',true,'',true);
+const rng={bd:d==null?null:[d+c.SecondTestDays,Math.min(T,d+c.MaxBirthDays)],wd:bd==null?null:[bd+mw,T]};
+if(rng.bd)f.bd.hint=`من ${F(rng.bd[0])} لحد ${F(rng.bd[1])} (المتوقع ${F(d+c.GestationDays)})`;
+if(rng.wd)f.wd.hint=`من ${F(rng.wd[0])} لحد ${F(rng.wd[1])} (المتوقع ${F(bd+c.WeaningAge)})`;
+const sk={};if(r.r1===E){sk[2]=sk[3]=sk[4]=1}if(r.r2===AB){sk[3]=sk[4]=1}if(has(r.bd)&&al===0)sk[4]=1;
+const dn=[d!=null,has(r.r1),has(r.r2),has(r.bd),has(r.wd)];
+const steps=['التلقيح','الجسة 1','الجسة 2','الولادة','الفطام'].map((n,i)=>({n,s:sk[i]?'skip':dn[i]?'done':'todo'}));
+for(let i=0;i<5;i++)if(steps[i].s==='todo'){steps[i].s='cur';break}
+let next;
+if(done)next=(r.r1===E?'الجسة الأولى «فاضي» — الدورة انتهت':r.r2===AB?'الدورة انتهت بإجهاض':has(r.wd)?'الدورة اكتملت (تم الفطام)':'الدورة انتهت — مفيش مواليد أحياء')+(odone?' — لو في غلط في تاريخ أو نتيجة احذف السجل وسجّله من جديد':'');
+else if(d==null)next='ابدأ بتاريخ التلقيح';
+else if(st===0)next=T<t1?`الجسة الأولى هتتفتح يوم ${F(t1)} (باقي ${left(t1)} يوم)`:'دلوقتي سجّل نتيجة الجسة الأولى';
+else if(st===1)next=T<t2?`الجسة التانية هتتفتح يوم ${F(t2)} (باقي ${left(t2)} يوم)`:'دلوقتي سجّل نتيجة الجسة التانية';
+else if(st===2)next=`دلوقتي سجّل تاريخ الولادة (المتوقع ${F(d+c.GestationDays)})`;
+else if(st===3)next=al==null?'سجّل عدد المواليد الأحياء':T<tw?`الفطام هيتفتح يوم ${F(tw)} (باقي ${left(tw)} يوم)`:'دلوقتي سجّل الفطام';
+else next='سجّل عدد المفطومين';
+if(!done&&st>=1)next+=' — المراحل اللي فاتت بتتقفل لما تسجّل اللي بعدها (امسح اللي بعدها لو محتاج تعدّل)';
+return{f,stage:st,oldDone:odone,done,rng,steps,next}}
+function brCheck(r,old,c,T){
+const fl=brFlow(r,old,c,T),ov=k=>old?String(old[k]??''):'',chg=k=>ov(k)!==String(r[k]??'');
+for(const k of['m','b','d','r1','r2','bd','al','dd','wd','wc']){if(!chg(k))continue;const x=fl.f[k];if(x.frozenOld)return x.lockWhy;if(has(r[k])&&!x.gate)return x.gateWhy}
+const d=D(r.d),bd=D(r.bd),wd=D(r.wd),al=has(r.al)?Number(r.al):null,dd=has(r.dd)?Number(r.dd):null,wc=has(r.wc)?Number(r.wc):null;
+if(bd==null&&(has(r.al)||has(r.dd)||has(r.wd)||has(r.wc))&&chg('bd'))return 'سجّل تاريخ الولادة أولًا';
+if(d!=null&&bd!=null&&(chg('bd')||chg('d'))){if(bd<d)return 'تاريخ الولادة قبل تاريخ التلقيح';if(bd<d+c.SecondTestDays)return `تاريخ الولادة لازم يكون بعد الجسة التانية (من ${F(d+c.SecondTestDays)})`;if(bd>d+c.MaxBirthDays)return `تاريخ الولادة بعد أكتر من ${c.MaxBirthDays} يوم من التلقيح — آخر تاريخ مقبول ${F(d+c.MaxBirthDays)}`}
+if((chg('al')&&al!=null&&al>25)||(chg('dd')&&dd!=null&&dd>25))return 'عدد المواليد كبير جدًا (أقصى 25) — راجع الرقم';
+if(bd!=null&&al==null&&(chg('bd')||chg('al')))return 'سجّل عدد المواليد الأحياء (ولو صفر)';
+if((chg('wd')||chg('wc'))&&((wd!=null)!==(wc!=null)))return 'تاريخ الفطام وعدد المفطومين يُسجَّلان معًا';
+if(wd!=null&&bd!=null&&(chg('wd')||chg('bd'))){if(wd<bd)return 'تاريخ الفطام قبل الولادة';if(wd<bd+c.MinWeanDays)return `الفطام لازم يكون بعد الولادة بـ ${c.MinWeanDays} يوم على الأقل (من ${F(bd+c.MinWeanDays)})`}
+if(wc!=null&&(chg('wc')||chg('al'))&&(al==null||wc>al))return 'عدد المفطومين أكبر من المواليد الأحياء';
+return ''}
+return{brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
