@@ -21,21 +21,21 @@ let ctr=0;const uid=()=>Date.now().toString(36)+(ctr++).toString(36)+Math.random
 const act=a=>!a.s||a.s.startsWith('نشط');
 const saleTotal=s=>(num(s.w)||0)*(num(s.p)||0);
 function clean(t,o){const r={id:typeof o.id==='string'&&o.id?o.id.slice(0,40):uid()};
-for(const f of SCHEMA[t]){const k=f[0],ty=f[2];let v=o[k];if(v==null||v==='')continue;
+for(const f of SCHEMA[t]){const k=f[0],ty=f[2];let v=o[k];if(v==null||v==='')continue;if(typeof v!=='string'&&typeof v!=='number')continue;
 if(ty==='int'||ty==='dec'){v=Number(v);if(!isFinite(v)||v<0)continue;v=ty==='int'?Math.round(v):Math.round(v*1000)/1000}
 else{v=String(v).trim();if(!v)continue;if(ty==='date'){if(D(v)==null)continue}else if(Array.isArray(ty)){if(!ty.includes(v))continue}else v=v.slice(0,k==='nt'?200:60)}
 r[k]=v}return r}
 function status(r,o,bd,wd,c,T){const A=c.AlertWindow;
-if(wd!=null)return['✅ اكتملت الدورة - تم الفطام','ok'];
-if(bd!=null){if(T>=o.wean)return['🔴 موعد الفطام اليوم أو فات','r'];if(T>=o.wean-A)return['🟡 قرب موعد الفطام','y'];if(T===bd||T===bd+1)return['💉 تأكد من حقنة المضاد الحيوي/الفيتامين اليوم','b'];return['🟢 ترضع - في انتظار الفطام','g']}
-if(r.r2===AB)return['⚠️ أجهضت بعد تأكيد الحمل - راجع الحالة','o'];
-if(r.r1===P){if(T>=o.exp)return['🔴 موعد الولادة اليوم أو فات - تابع الأم','r'];
-if(!r.r2){if(T>=o.t2)return['🔴 موعد الجسة الثانية اليوم أو فات','r'];if(T>=o.t2-A)return['🟡 قرب موعد الجسة الثانية','y']}
-return['🟢 حامل - سليمة','g']}
-if(r.r1===E)return['⚪ فاضية - سجّل تلقيح جديد','n'];
-if(T>=o.t1)return['🔴 موعد الجسة الأولى اليوم أو فات - جسّها','r'];
-if(T>=o.t1-A)return['🟡 قرب موعد الجسة الأولى','y'];
-return['⏳ في انتظار موعد الجسة الأولى','n']}
+if(wd!=null)return['✅ اكتملت الدورة - تم الفطام','ok','done'];
+if(bd!=null){if(T>=o.wean)return['🔴 موعد الفطام اليوم أو فات','r','wean'];if(T>=o.wean-A)return['🟡 قرب موعد الفطام','y','wean-s'];if(T===bd||T===bd+1)return['💉 تأكد من حقنة المضاد الحيوي/الفيتامين اليوم','b','inj'];return['🟢 ترضع - في انتظار الفطام','g','nurse']}
+if(r.r2===AB)return['⚠️ أجهضت بعد تأكيد الحمل - راجع الحالة','o','abort'];
+if(r.r1===P){if(T>=o.exp)return['🔴 موعد الولادة اليوم أو فات - تابع الأم','r','birth'];
+if(!r.r2){if(T>=o.t2)return['🔴 موعد الجسة الثانية اليوم أو فات','r','p2'];if(T>=o.t2-A)return['🟡 قرب موعد الجسة الثانية','y','p2-s']}
+return['🟢 حامل - سليمة','g','preg']}
+if(r.r1===E)return['⚪ فاضية - سجّل تلقيح جديد','n','empty'];
+if(T>=o.t1)return['🔴 موعد الجسة الأولى اليوم أو فات - جسّها','r','p1'];
+if(T>=o.t1-A)return['🟡 قرب موعد الجسة الأولى','y','p1-s'];
+return['⏳ في انتظار موعد الجسة الأولى','n','wait']}
 function calc(r,c,T){const d=D(r.d),o={};if(d==null)return o;const bd=D(r.bd),wd=D(r.wd),al=num(r.al),dd=num(r.dd),wc=num(r.wc);
 o.t1=d+c.FirstTestDays;if(r.r1===P){o.t2=d+c.SecondTestDays;o.exp=d+c.GestationDays}
 if(al!=null||dd!=null)o.tot=(al||0)+(dd||0);
@@ -86,7 +86,32 @@ total+=t[k].length}
 const cfg={...DEF};if(o.cfg&&typeof o.cfg==='object')for(const k in DEF){const v=Number(o.cfg[k]);if(isFinite(v)&&v>=0)cfg[k]=v}
 return{cfg,t,total,dropped,at:typeof o.at==='string'?o.at.slice(0,10):''}}
 
-function dueText(A){const p=[];if(A.urgent.length)p.push('🔴 '+A.urgent.length+' حالة تحتاج إجراء اليوم');if(A.soon.length)p.push('🟡 '+A.soon.length+' قريبة من موعدها');if(A.late)p.push('💉 '+A.late+' تحصين متأخر');return p.join('\n')}
+const DACT={p1:['🔴','عليها الجسة الأولى'],p2:['🔴','عليها الجسة التانية'],birth:['🔴','موعد ولادتها'],wean:['🔴','موعد فطام صغارها'],inj:['💉','حقنة المضاد/الفيتامين النهاردة'],'p1-s':['🟡','الجسة الأولى قربت'],'p2-s':['🟡','الجسة التانية قربت'],'wean-s':['🟡','الفطام قرب']};
+const DORD=['p1','p2','birth','wean','inj','p1-s','p2-s','wean-s'];
+function dueNote(A){
+const by=Object.create(null),kins=[],seenK=new Set(),nset=new Set();
+const put=(bucket,ord,key,ico,text,pre,plur,who,ck)=>{nset.add(ck);const k=bucket+'|'+key;const g=by[k]||(by[k]={bucket,ord,ico,text,pre,plur,who:[]});if(!g.who.includes(who))g.who.push(who)};
+for(const x of[...(A.urgent||[]),...(A.soon||[])]){const m=x&&x.r&&x.r.m;if(!has(m)||!x.o||!x.o.st)continue;const st=x.o.st,a=st[2],t=DACT[a]||[st[1]==='y'?'🟡':'🔴',String(st[0]).replace(/^\S+\s+/,'')];put('0',DACT[a]?DORD.indexOf(a):99,a||t[1],t[0],t[1],'الأم كود','الأمهات',String(m),'a|'+m+'|'+(a||t[1]))}
+for(const v of(A.vacs||[])){const a=v&&v.a;if(!a||!has(a.c))continue;const doe=v.t==='does',late=[],soon=[];
+for(const [nm,x] of[['البكتيري',v.b],['الفيروسي',v.v]]){const k=x&&x.st&&x.st[1];if(k==='r')late.push(nm);else if(k==='y')soon.push(nm)}
+const poss=doe?'تحصينها':'تحصينه',pre=doe?'الأم كود':'الذكر كود',plur=doe?'الأمهات':'الذكور';
+if(late.length)put('1',0,(doe?'d':'k')+'l'+late.join(),'💉',poss+' '+late.join(' و')+' متأخر',pre,plur,String(a.c),'v|'+(doe?'d':'k')+'|'+a.c);
+if(soon.length)put('2',0,(doe?'d':'k')+'s'+soon.join(),'💉',poss+' '+soon.join(' و')+' قرب',pre,plur,String(a.c),'v|'+(doe?'d':'k')+'|'+a.c)}
+for(const x of(A.kins||[])){const m=x&&x.r&&x.r.m;if(!has(m))continue;const b=has(x.r.b)?String(x.r.b):'',k=m+'|'+b;if(!seenK.has(k)){seenK.add(k);kins.push([String(m),b]);nset.add('k|'+k)}}
+for(const x of(A.ready||[])){if(x&&x.a&&has(x.a.c))put('4',0,'r','🐰','جاهزة للتلقيح','الأم كود','الأمهات',String(x.a.c),'r|'+x.a.c)}
+const cmp=(a,b)=>String(a).localeCompare(String(b),'ar',{numeric:true});
+const groups=Object.values(by).sort((a,b)=>a.bucket<b.bucket?-1:a.bucket>b.bucket?1:(a.ord-b.ord||cmp(a.text,b.text)));
+const cmp2=(a,b)=>cmp(a[0],b[0])||cmp(a[1],b[1]);const SHOW=6,MAXL=12;kins.sort(cmp2);
+const build=MAXN=>{const L=[];let n=0;
+const push=(ico,text,pre,plur,who)=>{who=who.slice().sort(cmp);n+=who.length;if(who.length<=MAXN)for(const w of who)L.push(ico+' '+pre+' '+w+' — '+text);else L.push(ico+' '+text+' — '+plur+': '+who.slice(0,SHOW).join('، ')+(who.length>SHOW?' (+'+(who.length-SHOW)+' كمان)':''))};
+for(const g of groups.filter(g=>g.bucket<'3'))push(g.ico,g.text,g.pre,g.plur,g.who);
+if(kins.length){n+=kins.length;if(kins.length<=MAXN)for(const [m,b] of kins)L.push('⚠️ الأم كود '+m+' — قرابة قريبة'+(b?' مع الذكر كود '+b:''));else L.push('⚠️ قرابة قريبة — '+kins.slice(0,SHOW).map(([m,b])=>m+(b?' × '+b:'')).join('، ')+(kins.length>SHOW?' (+'+(kins.length-SHOW)+' كمان)':''))}
+for(const g of groups.filter(g=>g.bucket>='4'))push(g.ico,g.text,g.pre,g.plur,g.who);
+return{L,n}};
+let R=build(3);if(R.L.length>MAXL)R=build(1);
+const L=R.L,n=R.n;if(L.length>MAXL){const rest=L.length-(MAXL-1);L.length=MAXL-1;L.push('… و'+rest+' بند تاني — افتح التطبيق')}
+const cnt=nset.size;return{title:cnt?'🐇 Rabbit Farm — '+cnt+' تنبيه':'🐇 Rabbit Farm',body:L.join('\n'),count:cnt}}
+function dueText(A){return dueNote(A).body}
 function fold(s){const enc=new TextEncoder();let out='',len=0;for(const ch of s){const n=enc.encode(ch).length;if(len+n>75){out+='\r\n ';len=1}out+=ch;len+=n}return out}
 function ics(S,c,T){const H=45,g=Object.create(null),p2=n=>String(n).padStart(2,'0'),dt=n=>{const d=new Date(n*864e5);return d.getUTCFullYear()+p2(d.getUTCMonth()+1)+p2(d.getUTCDate())},tx=s=>String(s).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');
 const add=(ty,title,day,who,all)=>{if(day==null||(!all&&day<T-30)||day>T+H)return;day=Math.max(day,T);const k=ty+day,e=g[k]||(g[k]={ty,title,day,w:[]});e.w.push(who)};
@@ -149,4 +174,4 @@ if((chg('wd')||chg('wc'))&&((wd!=null)!==(wc!=null)))return 'تاريخ الفط
 if(wd!=null&&bd!=null&&(chg('wd')||chg('bd'))){if(wd<bd)return 'تاريخ الفطام قبل الولادة';if(wd<bd+c.MinWeanDays)return `الفطام لازم يكون بعد الولادة بـ ${c.MinWeanDays} يوم على الأقل (من ${F(bd+c.MinWeanDays)})`}
 if(wc!=null&&(chg('wc')||chg('al'))&&(al==null||wc>al))return 'عدد المفطومين أكبر من المواليد الأحياء';
 return ''}
-return{brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
+return{dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
