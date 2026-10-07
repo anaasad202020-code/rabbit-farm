@@ -109,14 +109,14 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='24';
+const VER='25';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const R2=n=>Math.round(n*100)/100,nf=n=>R2(n).toLocaleString('en-US'),money=n=>n==null?'—':nf(n)+' ج.م',pc=n=>n==null?'—':Math.round(n*100)+'%';
 const T0=()=>D(todayS());
 const NM={br:'تلقيح',does:'أم',bucks:'ذكر',sales:'عملية بيع',exp:'مصروف',cust:'زبون'};
-const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','الحيوانات','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
+const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','القطيع','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
 const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
 const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['MaxBirthDays','أقصى مدة من التلقيح للولادة (للتحقق)','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['MinWeanDays','أقل مدة بين الولادة والفطام (للتحقق)','يوم'],['RemateDays','أيام بعد الولادة لحد ما الأم تبقى جاهزة للتلقيح من جديد','يوم'],['BuckRestHours','راحة الذكر بين تلقيحتين (٠ = من غير تحقق)','ساعة'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
 let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null;
@@ -292,7 +292,7 @@ function todayV(){const c=S.cfg,T=T0();const A=memo('al'+todayS(),()=>alerts(vie
 let dt=todayS();try{dt=new Date().toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}catch(e){}
 const k=(n,l,x)=>`<div class="k c-${x}"><b>${n}</b><span>${l}</span></div>`;
 let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.urgent.length?A.urgent.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.urgent.length,'عاجل','r')}${k(A.soon.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>${lossBanner()}${skipWarn()}${bkWarn()}`;
-if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «الحيوانات».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
+if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «القطيع».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
 const sec=(ti,L,fn,g)=>L.length?`<h3>${ti} <small>${L.length}</small></h3>${L.slice(0,20).map(fn).join('')}${L.length>20&&g?`<button class="lnk" data-go="${g}">عرض الكل (${L.length})</button>`:''}`:'';
 h+=sec('🔴 يحتاج إجراء اليوم',A.urgent,x=>brCard(x),'br||u')+sec('🟡 قريب من موعده',A.soon,x=>brCard(x),'br||s')+sec('💉 تحصينات متأخرة أو قريبة',A.vacs,x=>vacCard(x.a,x.t,x.b,x.v),'an|vac|l')+sec('⚠️ تنبيهات قرابة',A.kins,x=>brCard(x,'قرابة قريبة محتملة',true),'')+sec('🐰 أمهات جاهزة للتلقيح الأول',A.ready,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · جاهزة من ${F(x.from)} — اضغط لتسجيل تلقيح</span></button>`,'')+sec('🐰 أمهات جاهزة للتلقيح من جديد',A.again,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · ${esc(x.why)} — اضغط لتسجيل تلقيح</span></button>`,'');
 return h}
@@ -341,11 +341,11 @@ const B=Core.buckAvail(S2,c,Date.now()),it=B.map(x=>({v:x.a.c,sub:x.ok?'متاح
 function ddHtml(t,k,v,ty){const cu=ty==='cu';let it;
 if(t==='br'&&(k==='m'||k==='b')){const{it:L,hid}=brOpts(k,v,FS&&FS.id);
 it=L.map(x=>`<button type="button" class="ddo${x.v===v?' sel':''}" data-ddv="${esc(x.v)}"${x.off?' disabled':''}><span>${esc(x.v)}</span><small>${esc(x.sub)}</small>${x.v===v?'<span class="ck">✓</span>':''}</button>`).join('');
-if(!L.length)it=`<div class="dde">${k==='m'?'مفيش أمهات متاحة للتلقيح دلوقتي':'مفيش ذكور — أضفها من «الحيوانات» أولًا'}</div>`;
+if(!L.length)it=`<div class="dde">${k==='m'?'مفيش أمهات متاحة للتلقيح دلوقتي':'مفيش ذكور — أضفها من «القطيع» أولًا'}</div>`;
 if(hid)it+=`<div class="dde">مخفي ${hid} أم (في دورة شغالة أو لسه صغيرة)</div>`}
 else{const L=optList(t,k);
 it=(cu?'<button type="button" class="ddo nw" data-ddv="__new">＋ زبون جديد</button><button type="button" class="ddo" data-ddv="">— بدون زبون —</button>':'')+L.slice(0,1500).map(x=>`<button type="button" class="ddo${x===v?' sel':''}" data-ddv="${esc(x)}">${esc(x)}${x===v?'<span class="ck">✓</span>':''}</button>`).join('');
-if(!L.length&&!cu)it='<div class="dde">مفيش اختيارات — أضفها من «الحيوانات» أولًا</div>'}
+if(!L.length&&!cu)it='<div class="dde">مفيش اختيارات — أضفها من «القطيع» أولًا</div>'}
 return `<div class="dd" data-dd="${k}"><input type="hidden" id="f_${k}" value="${esc(v)}"><button type="button" class="ddb" data-ddo="1"><span class="ddv">${esc(v||(cu?'— بدون —':'اختر…'))}</span><span class="ddc">▾</span></button><div class="ddl" hidden><input type="search" class="dds" placeholder="بحث…" autocomplete="off"><div class="ddi">${it}</div></div></div>${cu?'<input id="f_cu_new" class="ddn" placeholder="اسم الزبون الجديد" maxlength="60" hidden>':''}`}
 function fieldHtml(t,f,r,edit){const[k,l,ty,rq]=f,v=r[k]==null?'':r[k],id='f_'+k;const lb=`<label for="${id}">${l}${rq?'<i> *</i>':''}</label>`;let inp;
 if(Array.isArray(ty))inp=`<select id="${id}">${ty.map(o=>`<option value="${esc(o)}"${o===v?' selected':''}>${o||'—'}</option>`).join('')}</select>`;
@@ -379,7 +379,7 @@ function validate(t,r,isNew,old){const T=T0();
 for(const f of SCHEMA[t])if(f[3]&&r[f[0]]==null)return `«${f[1]}» مطلوب`;
 for(const f of SCHEMA[t])if(f[2]==='date'&&r[f[0]]&&D(r[f[0]])>T)return `«${f[1]}» لا يمكن أن يكون في المستقبل`;
 if(t==='br'){const M=codes('does')[r.m],B=codes('bucks')[r.b];
-if(!M)return 'كود الأم غير موجود — أضفها من «الحيوانات» أولًا';if(!B)return 'كود الذكر غير موجود — أضفه من «الحيوانات» أولًا';
+if(!M)return 'كود الأم غير موجود — أضفها من «القطيع» أولًا';if(!B)return 'كود الذكر غير موجود — أضفه من «القطيع» أولًا';
 if(isNew&&!act(M))return 'الأم دي مستبعدة أو نافقة';if(isNew&&!act(B))return 'الذكر ده مستبعد أو نافق';
 const be=Core.brCheck(r,old,S.cfg,T);if(be)return be;
 if(isNew||!old||old.b!==r.b||old.d!==r.d||(old.tm||'')!==(r.tm||'')){if(r.tm&&D(r.d)===T){const n=new Date();if(r.tm>String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'))return 'وقت التلقيح في المستقبل'}
