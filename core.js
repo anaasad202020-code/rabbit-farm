@@ -18,7 +18,7 @@ const F=n=>n==null?'':new Date(n*864e5).toISOString().slice(0,10);
 const p2=n=>String(n).padStart(2,'0');
 const todayS=()=>{const t=new Date();return t.getFullYear()+'-'+p2(t.getMonth()+1)+'-'+p2(t.getDate())};
 let ctr=0;const uid=()=>Date.now().toString(36)+(ctr++).toString(36)+Math.random().toString(36).slice(2,5);
-const act=a=>!a.s||a.s.startsWith('نشط');
+const act=a=>!!a&&(!a.s||String(a.s).startsWith('نشط'));
 const saleTotal=s=>(num(s.w)||0)*(num(s.p)||0);
 function clean(t,o){const r={id:typeof o.id==='string'&&o.id?o.id.slice(0,40):uid()};
 for(const f of SCHEMA[t]){const k=f[0],ty=f[2];let v=o[k];if(v==null||v==='')continue;if(typeof v!=='string'&&typeof v!=='number')continue;
@@ -215,4 +215,36 @@ if(/^\d{1,3}$/.test(t)&&!x.numAll){if(!(n.ids.includes(t)||n.idc.includes(t)))re
 if(!(n.all.includes(t)||n.allc.includes(t)))return false}return true}
 function searchScore(x,tk){const n=nitem(x),pw=n.prim.split(' ');let s=0;for(const k of tk){if(k.date){s+=1;continue}const t=k.t;if(pw.includes(t))s+=4;else if(pw.some(w=>w.startsWith(t)))s+=3;else if(n.prim.includes(t))s+=2;else s+=1}return s}
 function searchRank(items,tk){if(!tk.length)return items;return items.map((x,i)=>({x,i,s:searchScore(x,tk)})).sort((a,b)=>b.s-a.s||a.i-b.i).map(o=>o.x)}
-return{searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
+/* ---------- plain-language status lines for the cards ---------- */
+function ago(n){n=Math.max(0,Math.round(n));return n===0?'النهاردة':n===1?'من يوم':n===2?'من يومين':n<=10?'من '+n+' أيام':'من '+n+' يوم'}
+function matingAge(r,T){const d=D(r&&r.d);if(d==null)return '';const bd=D(r.bd),wd=D(r.wd);
+if(wd!=null)return 'فُطمت '+ago(T-wd);if(bd!=null)return 'ولدت '+ago(T-bd);if(r.r2===AB)return 'أجهضت';if(r.r1===E)return 'الجسة طلعت فاضي';
+return 'متلقحة '+ago(T-d)}
+function doeNow(S,c,T){const last=new Map();
+for(const r of S.br||[]){if(!r||!has(r.m))continue;const d=D(r.d);if(d==null)continue;const mm=ms(r),p=last.get(r.m);if(!p||mm>=p.ms)last.set(r.m,{ms:mm,d,r})}
+const out=new Map();
+for(const a of S.does||[]){if(!a)continue;if(!act(a)){out.set(a.c,{text:String(a.s||'مستبعدة'),next:'',kind:'x'});continue}
+const L=last.get(a.c);
+if(!L){const bd=D(a.bd);out.set(a.c,bd!=null&&T<bd+c.FirstMatingAge?{text:'⚪ لسه صغيرة',next:'جاهزة للتلقيح بعد '+(bd+c.FirstMatingAge-T)+' يوم',kind:'n'}:{text:'🟢 جاهزة للتلقيح الأول',next:'',kind:'g'});continue}
+const r=L.r,o=calc(r,c,T),n=T-L.d,bd=D(r.bd),wd=D(r.wd);let text,next='',kind='g';
+const due=(x,w)=>x===T?w+' النهاردة':x<T?w+' فات بـ '+(T-x)+' يوم':w+' بعد '+(x-T)+' يوم';
+if(wd!=null){text='✅ فُطم صغارها '+ago(T-wd);next='جاهزة للتلقيح من جديد'}
+else if(bd!=null){const age=T-bd;text='🍼 والدة وبترضع (ولدت '+ago(age)+(r.al!=null?' · '+r.al+' صغير حي':'')+')';
+const p=[age>=c.RemateDays?'جاهزة للتلقيح من جديد':'جاهزة للتلقيح بعد '+(c.RemateDays-age)+' يوم',due(o.wean,'موعد الفطام')];next=p.join(' · ');kind=T>=o.wean?'r':T>=o.wean-c.AlertWindow?'y':'g'}
+else if(r.r2===AB){text='⚠️ أجهضت';next='جاهزة للتلقيح من جديد';kind='y'}
+else if(r.r1===E){text='⚪ فاضية (الجسة طلعت فاضي)';next='جاهزة للتلقيح من جديد';kind='n'}
+else if(r.r1===P&&r.r2===L2){text='🤰 حامل — يوم '+n+' من '+c.GestationDays;next=due(o.exp,'موعد الولادة')+(T>=o.exp?' — تابعها':' ('+F(o.exp)+')');kind=T>=o.exp?'r':T>=o.exp-c.AlertWindow?'y':'g'}
+else if(r.r1===P){text='🤰 حامل (الجسة الأولى عشار) — متلقحة '+ago(n);next=T>=o.exp?due(o.exp,'موعد الولادة')+' — تابعها':due(o.t2,'موعد الجسة التانية');kind=T>=o.t2||T>=o.exp?'r':T>=o.t2-c.AlertWindow?'y':'g'}
+else{text='⏳ متلقحة '+ago(n);next=due(o.t1,'موعد الجسة الأولى');kind=T>=o.t1?'r':T>=o.t1-c.AlertWindow?'y':'n'}
+out.set(a.c,{text,next,kind})}
+return out}
+function sinceText(diff){const h=Math.floor(Math.max(0,diff)/36e5);return h<1?'من أقل من ساعة':h<48?'من '+h+' ساعة':'من '+Math.floor(h/24)+' يوم'}
+function buckNow(S,c,now){const cnt=new Map(),lim=now-30*864e5;
+for(const r of S.br||[]){if(!r||!has(r.b))continue;const m=ms(r);if(m!=null&&m>=lim&&m<=now+864e5)cnt.set(r.b,(cnt.get(r.b)||0)+1)}
+const out=new Map();for(const a of S.bucks||[])if(a&&!act(a))out.set(a.c,{text:String(a.s||'مستبعد'),next:'',kind:'x'});
+for(const x of buckAvail(S,c,now)){const k=x.a.c,n=cnt.get(k)||0,tail=n?' · لقّح '+(n===1?'مرة':n===2?'مرتين':n<=10?n+' مرات':n+' مرة')+' في آخر 30 يوم':'';
+if(x.last==null)out.set(k,{text:'🟢 متاح للتلقيح',next:'لسه ما لقّحش',kind:'g'});
+else if(x.ok)out.set(k,{text:'🟢 متاح للتلقيح',next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'g'});
+else out.set(k,{text:'⏳ بيرتاح — '+remText(x.remMs),next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'y'})}
+return out}
+return{ago,matingAge,doeNow,buckNow,sinceText,searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
