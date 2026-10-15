@@ -111,7 +111,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='26';
+const VER='27';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -361,14 +361,15 @@ function collect(t){const o={};for(const f of SCHEMA[t]){const e=document.getEle
 const nowHM=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function openForm(t,id,pre){const r=id?byId(t).get(id):Object.assign({},pre||{});if(id&&!r)return;if(t==='br'&&!id){r.d=r.d||todayS();r.tm=r.tm||nowHM()}FS={t,id:id||null};
 $('#sht').textContent=(id?'تعديل ':'إضافة ')+NM[t];
-$('#shb').innerHTML=`${t==='br'?'<div id="stp" class="stp"></div><div id="stn" class="stn"></div>':''}<div id="fm">${SCHEMA[t].map(f=>fieldHtml(t,f,r,!!id)).join('')}</div><div id="pv" class="pv"></div><div id="er" class="er"></div><div class="acts"><button class="btn" id="sv">حفظ</button>${id?'<button class="btn d" id="dl">حذف</button>':''}</div>`;
+$('#shb').innerHTML=`${t==='br'?'<div id="stp" class="stp"></div><div id="stn" class="stn"></div><div id="injbox"></div>':''}<div id="fm">${SCHEMA[t].map(f=>fieldHtml(t,f,r,!!id)).join('')}</div><div id="pv" class="pv"></div><div id="er" class="er"></div><div class="acts"><button class="btn" id="sv">حفظ</button>${id?'<button class="btn d" id="dl">حذف</button>':''}</div>`;
 showSheet();pv()}
 function applyFlow(){if(!FS||FS.t!=='br')return;const old=FS.id?byId('br').get(FS.id):null,r=clean('br',{...collect('br'),id:FS.id||'x'}),fl=Core.brFlow(r,old,S.cfg,T0());
 for(const f of SCHEMA.br){const k=f[0],x=fl.f[k],el=document.getElementById('f_'+k);if(!el)continue;const wrap=el.closest('.fl'),off=!x.on;
 if(el.type==='hidden'){const b=wrap.querySelector('.ddb');if(b){b.disabled=off;if(off){const l=wrap.querySelector('.ddl');if(l)l.hidden=true}}}else el.disabled=off;
 wrap.classList.toggle('off',off);const hh=wrap.querySelector('.fh');if(hh)hh.textContent=off?x.why:x.hint;
 if(k==='bd'&&fl.rng.bd){el.min=F(fl.rng.bd[0]);el.max=F(fl.rng.bd[1])}if(k==='wd'&&fl.rng.wd){el.min=F(fl.rng.wd[0]);el.max=F(fl.rng.wd[1])}}
-const s=$('#stp');if(s)s.innerHTML=fl.steps.map(x=>`<span class="${x.s}">${x.n}</span>`).join('');const n=$('#stn');if(n)n.textContent=(fl.oldDone?'🔒 ':'')+fl.next}
+const s=$('#stp');if(s)s.innerHTML=fl.steps.map(x=>`<span class="${x.s}">${x.n}</span>`).join('');const n=$('#stn');if(n)n.textContent=(fl.oldDone?'🔒 ':'')+fl.next;
+const ib=$('#injbox');if(ib){const bd=D(r.bd),TT=T0();let hh='';if(bd!=null&&(TT-bd<=3||r.ab||r.vt)){const row=(k,lab)=>{const v=r[k];return `<div class="row" style="margin-top:8px"><span>${lab}</span><button type="button" class="btn${v?'':' s'}" data-act="inj" data-f="${k}">${v?'✓ تمت '+esc(v)+' — تراجع':'تمت النهاردة ✓'}</button></div>`};hh=`<div class="cd injb"><b>💉 الحقن المطلوبة بعد الولادة</b>${row('ab','حقنة المضاد الحيوي')}${row('vt','حقنة الفيتامينات')}<div class="mu" style="margin-top:8px">اضغط «تمت» لكل حقنة، وبعدين «حفظ». لما الاتنين يتسجلوا التنبيه بيختفي من «اليوم»، ولو سجّلت واحدة بس بيفضل باقي التانية.</div></div>`}ib.innerHTML=hh}}
 function pv(){if(!FS)return;const{t,id}=FS,c=S.cfg,T=T0();applyFlow();if(FS.armed){FS.armed=false;$('#sv').textContent='حفظ';$('#er').textContent=''}const r=clean(t,{...collect(t),id:id||'x'});let h='';
 const L=(l,n)=>n==null||n===''?'':`<div><span>${l}</span><b>${n}</b></div>`;
 if(t==='br'){const o=calc(r,c,T);h=L('الجسة الأولى',F(o.t1))+L('الجسة الثانية',F(o.t2))+L('الولادة المتوقعة',F(o.exp))+L('حقنة المضاد الحيوي',F(o.ab))+L('حقنة الفيتامين',F(o.vit))+L('الفطام المتوقع',F(o.wean))+L('إجمالي المواليد',o.tot)+L('نافق أثناء الرضاعة',o.died)+L('نسبة الفطام',o.wp==null?'':pc(o.wp))+(o.st?`<div><span>الحالة</span><b class="ch c-${o.st[1]}">${o.st[0]}</b></div>`:'');
@@ -436,7 +437,8 @@ if(nc.MinWeanDays>nc.WeaningAge){toast('أقل مدة للفطام لازم تك
 if(nc.MaxBirthDays<nc.GestationDays){toast('أقصى مدة للولادة لازم تكون أكبر من أو تساوي مدة الحمل');return}
 S.cfg=nc;qc();S.v++;toast('تم حفظ الإعدادات ✓');render()}
 async function updateApp(){toast('جارٍ التحديث…');try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.reload()}
-function doAct(a,el){if(a==='newbr'){openForm('br',null,{m:el.dataset.m});return}
+function doAct(a,el){if(a==='inj'){const e=document.getElementById('f_'+el.dataset.f);if(!e||e.disabled)return;e.value=e.value?'':todayS();e.dispatchEvent(new Event('change',{bubbles:true}));return}
+if(a==='newbr'){openForm('br',null,{m:el.dataset.m});return}
 if(a==='retry')return retryBoot();if(a==='reload')return location.reload();if(a==='rerender'){render();return}if(a==='rawbk')return rawBackup();if(a==='nosave'){loadErr=null;render();return}if(a==='upd')return updateApp();if(a==='svc')return saveAllCfg();if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();
 if(a==='bk')return doBackup();
 if(a==='autores'){if(!el.dataset.arm){el.dataset.arm='1';const o=el.textContent;el.textContent='اضغط مرة تانية للتأكيد';setTimeout(()=>{el.dataset.arm='';el.textContent=o},3000);return}return restoreAuto(+el.dataset.slot)}
