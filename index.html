@@ -81,6 +81,16 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 .fl.off .fh{color:var(--wn,#b9770e)}
 /* status lines */
 .now{margin-top:6px;font-size:14px;line-height:1.5}
+.dt{white-space:nowrap}
+.kl{padding-inline-start:8px;border-inline-start:3px solid var(--ln)}
+.kl.k-r,.kl.k-b{border-inline-start-color:var(--rc)}.kl.k-y{border-inline-start-color:var(--yc)}.kl.k-g{border-inline-start-color:var(--gc)}
+/* merged doe card: nursing litter + new pregnancy in one place */
+.mg{padding:10px 12px}.mg>.row{margin-bottom:2px}
+.mc{display:block;width:100%;text-align:start;background:var(--bg);color:inherit;border:1px solid var(--ln);border-inline-start:4px solid var(--ln);border-radius:12px;padding:9px 10px;margin-top:8px;font:inherit}
+.mc.k-r,.mc.k-b{border-inline-start-color:var(--rc)}.mc.k-y{border-inline-start-color:var(--yc)}.mc.k-g{border-inline-start-color:var(--gc)}
+.mc:active{background:var(--nb);transform:none;filter:none}
+.mc .row b{font-weight:700}.sm{font-size:12px}
+.fg{margin-top:8px;padding:8px 10px;border-radius:10px;background:var(--rb);color:var(--rc);font-size:14px;font-weight:700}
 /* dropdown */
 .ddo small{color:var(--mu);font-size:12px;margin-inline-start:8px}
 .ddo .ck{margin-inline-start:6px}
@@ -111,7 +121,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='27';
+const VER='28';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -121,6 +131,9 @@ const NM={br:'تلقيح',does:'أم',bucks:'ذكر',sales:'عملية بيع',e
 const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','القطيع','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
 const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
 const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['MaxBirthDays','أقصى مدة من التلقيح للولادة (للتحقق)','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['MinWeanDays','أقل مدة بين الولادة والفطام (للتحقق)','يوم'],['RemateDays','أيام بعد الولادة لحد ما الأم تبقى جاهزة للتلقيح من جديد','يوم'],['BuckRestHours','راحة الذكر بين تلقيحتين (٠ = من غير تحقق)','ساعة'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
+const CFGE=[['BirthAlertDays','تنبيه قبل الولادة المتوقعة بـ','يوم','هيجيلك تنبيه أصفر قبل موعد الولادة بالأيام دي، بدل ما تعرف يوم الولادة نفسه. اكتب ٠ لو مش عايز تنبيه مبكر.'],['WeanBeforeBirthDays','تنبيه فطام صغار الأم المرضعة الحامل — قبل ولادتها الجاية بـ','يوم','لو الأم لسه بترضع وانت لقّحتها من جديد: هيجيلك تنبيه تفطم صغارها لما يفضل على ولادتها الجاية الأيام دي. اكتب ٠ لإيقاف التنبيه ده.']];
+const ZOK=new Set(CFGE.map(x=>x[0]));
+const earlyHint=(k,v)=>{const G=S.cfg.GestationDays;return v>0&&isFinite(v)?'حاليًا التنبيه بيظهر يوم '+(G-v)+' من التلقيح (مدة الحمل '+G+' يوم).':'التنبيه ده متوقف دلوقتي.'};
 let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null;
 const S={cfg:{...DEF},ch:{},v:0};for(const t in SCHEMA)S.ch[t]=[[]];
 const C={};const memo=(k,fn)=>{const e=C[k];if(e&&e.v===S.v)return e.r;const r=fn();C[k]={v:S.v,r};return r};
@@ -287,16 +300,24 @@ const curT=()=>tab==='br'?'br':tab==='an'?sub.an:tab==='acc'&&sub.acc!=='sum'?su
 function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';pg=1;render();try{scrollTo(0,0)}catch(e){}}
 
 /* ---------- views ---------- */
+const fx=x=>esc(x).replace(/\d{4}-\d{2}-\d{2}/g,'<bdi dir="ltr" class="dt">$&</bdi>');
+const MAXB=4,SEVC={u:['🔴 عاجل','r'],s:['🟡 قريب','y'],g:['🟢 جارية','g']};
+/* a doe can have two live cycles at once (nursing litter + new pregnancy): we show her ONCE. Extra stale open cycles beyond MAXB stay as their own cards */
+function caseSplit(cs){const by=cs.cyc.slice().sort((a,b)=>b.r.d<a.r.d?-1:b.r.d>a.r.d?1:0),keep=new Set(by.slice(0,MAXB).map(x=>x.r.id));return{shown:cs.cyc.filter(x=>keep.has(x.r.id)),rest:cs.cyc.filter(x=>!keep.has(x.r.id))}}
+function caseHtml(cs,note){const{shown,rest}=caseSplit(cs);
+if(shown.length===1&&!cs.flags.length&&!rest.length)return brCard({r:shown[0].r,o:shown[0].o});
+const sv=SEVC[cs.sev],blk=x=>`<button class="mc k-${x.k}" data-open="br|${x.r.id}"><div class="row"><b>${x.i} ${fx(x.t)}</b><span class="ch c-${x.o.st[1]}">${fx(x.o.st[0])}</span></div><div class="mu">${fx(x.n)}</div><div class="mu sm">تلقيح ${fx(x.r.d)}${x.r.tm?' '+esc(x.r.tm):''} × ذكر ${esc(x.r.b)}${x.r.bd?' · ولادة '+fx(x.r.bd):''}</div></button>`;
+return `<div class="cd mg"><div class="row"><b>الأم ${esc(cs.m)}</b><span class="ch c-${sv[1]}">${sv[0]}</span></div>${shown.map(blk).join('')}${cs.flags.map(f=>`<div class="fg">${fx(f.t)}</div>`).join('')}${note&&rest.length?`<div class="mu" style="margin-top:8px">و ${rest.length} دورة مفتوحة تانية للأم دي — افتحها من «التناسل»</div>`:''}</div>`}
 const brCard=({r,o},extra,pair)=>`<button class="cd" data-open="br|${r.id}"><div class="row"><b>${pair?esc(r.m)+' × '+esc(r.b):'الأم '+esc(r.m)}</b><span class="ch c-${o.st[1]}">${o.st[0]}</span></div><div class="mu">${esc(Core.matingAge(r,T0()))} · ${r.d}${extra?' · '+extra:''}</div></button>`;
 const vacCard=(a,t,b,v)=>{const ln=(lb,x,f)=>`<div class="vr"><span>${lb}${x.next?' · '+F(x.next):''}</span><span class="ch c-${x.st[1]}">${x.st[0]}</span><button class="mini" data-vac="${t}|${a.id}|${f}">حصّنت اليوم</button></div>`;
 return `<div class="cd"><div class="row"><b>${esc(a.c)}</b><span class="mu">${t==='does'?'أم':'ذكر'}</span></div>${ln('بكتيري',b,'vb')}${ln('فيروسي',v,'vv')}</div>`};
 function todayV(){const c=S.cfg,T=T0();const A=memo('al'+todayS(),()=>alerts(view(),c,T));
 let dt=todayS();try{dt=new Date().toLocaleDateString('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}catch(e){}
 const k=(n,l,x)=>`<div class="k c-${x}"><b>${n}</b><span>${l}</span></div>`;
-let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.urgent.length?A.urgent.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.urgent.length,'عاجل','r')}${k(A.soon.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>${lossBanner()}${skipWarn()}${bkWarn()}`;
+let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.cu.length?A.cu.length+' حالة تحتاج إجراء اليوم':'مفيش حالات عاجلة النهاردة'}</h2></div><div class="kp3">${k(A.cu.length,'عاجل','r')}${k(A.cs.length,'قريب','y')}${k(A.late,'تحصين متأخر','o')}${k(A.kins.length,'قرابة','b')}</div>${lossBanner()}${skipWarn()}${bkWarn()}`;
 if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «القطيع».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
 const sec=(ti,L,fn,g)=>L.length?`<h3>${ti} <small>${L.length}</small></h3>${L.slice(0,20).map(fn).join('')}${L.length>20&&g?`<button class="lnk" data-go="${g}">عرض الكل (${L.length})</button>`:''}`:'';
-h+=sec('🔴 يحتاج إجراء اليوم',A.urgent,x=>brCard(x),'br||u')+sec('🟡 قريب من موعده',A.soon,x=>brCard(x),'br||s')+sec('💉 تحصينات متأخرة أو قريبة',A.vacs,x=>vacCard(x.a,x.t,x.b,x.v),'an|vac|l')+sec('⚠️ تنبيهات قرابة',A.kins,x=>brCard(x,'قرابة قريبة محتملة',true),'')+sec('🐰 أمهات جاهزة للتلقيح الأول',A.ready,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · جاهزة من ${F(x.from)} — اضغط لتسجيل تلقيح</span></button>`,'')+sec('🐰 أمهات جاهزة للتلقيح من جديد',A.again,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · ${esc(x.why)} — اضغط لتسجيل تلقيح</span></button>`,'');
+h+=sec('🔴 يحتاج إجراء اليوم',A.cu,x=>caseHtml(x,1),'br||u')+sec('🟡 قريب من موعده',A.cs,x=>caseHtml(x,1),'br||s')+sec('💉 تحصينات متأخرة أو قريبة',A.vacs,x=>vacCard(x.a,x.t,x.b,x.v),'an|vac|l')+sec('⚠️ تنبيهات قرابة',A.kins,x=>brCard(x,'قرابة قريبة محتملة',true),'')+sec('🐰 أمهات جاهزة للتلقيح الأول',A.ready,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · جاهزة من ${F(x.from)} — اضغط لتسجيل تلقيح</span></button>`,'')+sec('🐰 أمهات جاهزة للتلقيح من جديد',A.again,x=>`<button class="cd" data-act="newbr" data-m="${esc(x.a.c)}"><b>الأم ${esc(x.a.c)}</b><span class="mu"> · ${esc(x.why)} — اضغط لتسجيل تلقيح</span></button>`,'');
 return h}
 function sumV(){const d=memo('d'+todayS(),()=>dash(view(),S.cfg,T0()));const k=(l,v,x)=>`<div class="k ${x||''}"><span>${l}</span><b>${v}</b></div>`;
 return `<h3>كل الفترات</h3><div class="kp">${k('صافي الربح',money(d.net),d.net<0?'neg':'')}${k('إجمالي الإيراد',money(d.rev))}${k('إجمالي المصروفات',money(d.exp))}${k('تكلفة الكيلو (تقريبية)',money(d.cpk))}</div>
@@ -306,9 +327,17 @@ return `<h3>كل الفترات</h3><div class="kp">${k('صافي الربح',mo
 function listShell(t){const FL={br:[['','الكل'],['u','عاجل'],['s','قريب'],['g','جارية'],['x','مكتملة']],vac:[['','الكل'],['l','متأخر'],['s','قريب']],does:[['','الكل'],['a','نشطة'],['w','تحتاج مراجعة']]};FL.bucks=FL.does;const f=FL[t];
 return `<div class="tb"><input id="q" type="search" placeholder="بحث…" value="${esc(q)}" autocomplete="off">${f?`<select id="flt">${f.map(([k,l])=>`<option value="${k}"${flt===k?' selected':''}>${l}</option>`).join('')}</select>`:''}</div><div id="lst"></div>${t==='vac'?'':`<button class="fab" data-add="${t}" aria-label="إضافة">＋</button>`}`}
 const sortD=(R,k)=>R.slice().sort((a,b)=>a[k]<b[k]?1:a[k]>b[k]?-1:0);
-function items(t){const c=S.cfg,T=T0(),R=rows(t);const mk=(id,title,sb,ch,k,f,dim,x)=>({tb:t,id,title,sub:sb,c:ch,k,f:f||'',dim,ids:x.ids,prim:x.prim,rest:x.rest||'',numAll:!!x.numAll,s2:x.s2||'',s3:x.s3||''});
-if(t==='br')return sortD(R,'d').map(r=>{const o=calc(r,c,T),k=o.st?o.st[1]:'',sb=[r.d+(r.tm?' '+r.tm:''),r.bd?'ولادة '+r.bd:o.exp?'ولادة متوقعة '+F(o.exp):'',r.al!=null?r.al+' حي':''].filter(Boolean).join(' · ');return mk(r.id,r.m+' × '+r.b,sb,o.st&&o.st[0],k,r.r1==='فاضي'?'x':{r:'u',b:'u',y:'s',g:'g',ok:'x',n:'g',o:'g'}[k],undefined,{ids:r.m+' '+r.b,prim:r.m,rest:[r.d,r.tm,r.bd,r.nt,o.st&&o.st[0],Core.matingAge(r,T)].filter(Boolean).join(' '),s2:Core.matingAge(r,T)})});
-if(t==='does'||t==='bucks'){const X=ST()[t==='does'?'M':'B'],NW=t==='does'?Core.doeNow(view(),c,T):Core.buckNow(view(),c,Date.now());return R.slice().sort((a,b)=>a.c.localeCompare(b.c,'ar',{numeric:true})).map(a=>{const x=X[a.c]||Core.empty(c);return mk(a.id,a.c+(a.sl?' · '+a.sl:''),`${x.n} تلقيح · نجاح ${pc(x.sr)} · فطام ${pc(x.wp)}`+(act(a)?'':' · '+a.s),x.rate[0],x.rate[1],(act(a)?'a':'')+(x.rate[1]==='o'?'w':''),!act(a),{ids:a.c,prim:a.c,rest:[a.sl,a.s,a.src,a.nt,x.rate[0],(NW.get(a.c)||{}).text,(NW.get(a.c)||{}).next].filter(Boolean).join(' '),s2:(NW.get(a.c)||{}).text,s3:(NW.get(a.c)||{}).next})})}
+function items(t){const c=S.cfg,T=T0(),R=rows(t);const mk=(id,title,sb,ch,k,f,dim,x)=>({tb:t,id,title,sub:sb,c:ch,k,f:f||'',dim,ids:x.ids,prim:x.prim,rest:x.rest||'',numAll:!!x.numAll,s2:x.s2||'',s3:x.s3||'',ls:x.ls});
+if(t==='br'){const FM={r:'u',b:'u',y:'s',g:'g',ok:'x',n:'g',o:'g'};
+const one=r=>{const o=calc(r,c,T),k=o.st?o.st[1]:'',sb=[r.d+(r.tm?' '+r.tm:''),r.bd?'ولادة '+r.bd:o.exp?'ولادة متوقعة '+F(o.exp):'',r.al!=null?r.al+' حي':''].filter(Boolean).join(' · '),it=mk(r.id,r.m+' × '+r.b,sb,o.st&&o.st[0],k,r.r1==='فاضي'?'x':FM[k],undefined,{ids:r.m+' '+r.b,prim:r.m,rest:[r.d,r.tm,r.bd,r.nt,o.st&&o.st[0],Core.matingAge(r,T)].filter(Boolean).join(' '),s2:Core.matingAge(r,T)});it.d=r.d;return it};
+const CS=Core.cases(view(),c,T),liveIds=new Set(),out=[];
+for(const cs of CS.values())for(const x of cs.cyc)liveIds.add(x.r.id);
+for(const r of R)if(!liveIds.has(r.id))out.push(one(r));
+for(const cs of CS.values()){const{shown,rest}=caseSplit(cs);for(const x of rest)out.push(one(x.r));
+if(shown.length===1&&!cs.flags.length){out.push(one(shown[0].r));continue}
+out.push({tb:'br',id:'m:'+cs.m,h:caseHtml(cs,0),f:{u:'u',s:'s',g:'g'}[cs.sev],ids:cs.m+' '+shown.map(x=>x.r.b).join(' '),prim:cs.m,numAll:false,s2:'',s3:'',d:shown.reduce((a,x)=>x.r.d>a?x.r.d:a,''),rest:shown.map(x=>[x.r.d,x.r.tm,x.r.bd,x.r.nt,x.o.st[0],x.t,x.n,Core.matingAge(x.r,T)].filter(Boolean).join(' ')).join(' ')+' '+cs.flags.map(f=>f.t).join(' ')})}
+return out.sort((a,b)=>a.d<b.d?1:a.d>b.d?-1:0)}
+if(t==='does'||t==='bucks'){const X=ST()[t==='does'?'M':'B'],NW=t==='does'?Core.doeNow(view(),c,T):Core.buckNow(view(),c,Date.now());return R.slice().sort((a,b)=>a.c.localeCompare(b.c,'ar',{numeric:true})).map(a=>{const x=X[a.c]||Core.empty(c);return mk(a.id,a.c+(a.sl?' · '+a.sl:''),`${x.n} تلقيح · نجاح ${pc(x.sr)} · فطام ${pc(x.wp)}`+(act(a)?'':' · '+a.s),x.rate[0],x.rate[1],(act(a)?'a':'')+(x.rate[1]==='o'?'w':''),!act(a),{ids:a.c,prim:a.c,rest:[a.sl,a.s,a.src,a.nt,x.rate[0],(NW.get(a.c)||{}).text,(NW.get(a.c)||{}).next].filter(Boolean).join(' '),s2:(NW.get(a.c)||{}).text,s3:(NW.get(a.c)||{}).next,ls:(NW.get(a.c)||{}).lines})})}
 if(t==='sales')return sortD(R,'d').map(s=>mk(s.id,`${s.n} أرنب · ${money(saleTotal(s))}`,[s.d,s.cu,R2(s.w)+' كجم',s.n?'متوسط '+R2(s.w/s.n)+' كجم':''].filter(Boolean).join(' · '),undefined,undefined,undefined,undefined,{ids:(s.cu||'')+' '+(s.bt||''),prim:s.cu||'',rest:[s.d,s.cu,s.n,s.w,s.p,s.nt,money(saleTotal(s))].filter(v=>v!=null&&v!=='').join(' '),numAll:true}));
 if(t==='exp')return sortD(R,'d').map(e=>mk(e.id,`${e.ty} · ${money(e.a)}`,[e.d,e.dt].filter(Boolean).join(' · '),undefined,undefined,undefined,undefined,{ids:e.ty||'',prim:e.ty||'',rest:[e.d,e.dt,e.a,e.nt,money(e.a)].filter(v=>v!=null&&v!=='').join(' '),numAll:true}));
 if(t==='cust'){const A=memo('ca',()=>custAgg(rows('sales')));return R.slice().sort((a,b)=>a.c.localeCompare(b.c,'ar')).map(u=>{const x=A[u.c]||{n:0,rab:0,kg:0,paid:0};return mk(u.id,u.c+(u.ty?' · '+u.ty:''),`${x.n} مرة · ${x.rab} أرنب · ${money(x.paid)}`+(x.kg?' · '+money(x.paid/x.kg)+'/كجم':''),undefined,undefined,undefined,undefined,{ids:u.c+' '+(u.ph||''),prim:u.c,rest:[u.ty,u.nt].filter(Boolean).join(' ')})})}
@@ -317,16 +346,18 @@ function vacItems(){const c=S.cfg,T=T0(),out=[],P={r:0,y:1,n:2,g:3};
 for(const t of['does','bucks'])for(const a of rows(t)){if(!act(a))continue;const b=vac(a.vb,c.BacterialVaccineCycle,c,T),v=vac(a.vv,c.ViralVaccineCycle,c,T);
 out.push({p:Math.min(P[b.st[1]],P[v.st[1]]),f:(b.st[1]==='r'||v.st[1]==='r'?'l':'')+(b.st[1]==='y'||v.st[1]==='y'?'s':''),hay:a.c.toLowerCase(),ids:a.c,prim:a.c,rest:[a.sl,a.s,b.st[0],v.st[0]].filter(Boolean).join(' '),h:vacCard(a,t,b,v)})}
 return out.sort((x,y)=>x.p-y.p||(x.hay<y.hay?-1:1))}
-const cardHtml=x=>x.h||`<button class="cd${x.dim?' dim':''}" data-open="${x.tb}|${x.id}"><div class="row"><b>${esc(x.title)}</b>${x.c?`<span class="ch c-${x.k}">${esc(x.c)}</span>`:''}</div><div class="mu">${esc(x.sub)}</div>${x.s2?`<div class="now">${esc(x.s2)}</div>`:''}${x.s3?`<div class="mu">${esc(x.s3)}</div>`:''}</button>`;
+const lineH=l=>`<div class="now kl k-${l.k||'n'}">${l.i?esc(l.i)+' ':''}${fx(l.t)}${l.n?`<div class="mu">${fx(l.n)}</div>`:''}</div>`;
+const cardHtml=x=>x.h||`<button class="cd${x.dim?' dim':''}" data-open="${x.tb}|${x.id}"><div class="row"><b>${esc(x.title)}</b>${x.c?`<span class="ch c-${x.k}">${esc(x.c)}</span>`:''}</div><div class="mu">${esc(x.sub)}</div>${x.ls?x.ls.map(lineH).join(''):''}${!x.ls&&x.s2?`<div class="now">${esc(x.s2)}</div>`:''}${!x.ls&&x.s3?`<div class="mu">${esc(x.s3)}</div>`:''}</button>`;
 function fillList(){const t=curT();if(!t)return;let it=t==='vac'?vacItems():memo('it:'+t+':'+todayS()+(t==='bucks'?':'+Math.floor(Date.now()/6e4):''),()=>items(t));const tk=Core.searchTokens(q);
 if(tk.length){it=it.filter(x=>Core.searchOk(x,tk));it=Core.searchRank(it,tk)}if(flt)it=it.filter(x=>x.f&&x.f.includes(flt));
 const n=it.length,sh=it.slice(0,pg*30),base=t==='vac'?rows('does').length+rows('bucks').length:rows(t).length;
 $('#lst').innerHTML=(n?sh.map(cardHtml).join(''):`<div class="empty">${base?'مفيش نتائج مطابقة':'لسه مفيش بيانات — اضغط ＋ للإضافة'}</div>`)+(n>sh.length?`<button class="lnk" data-more="1">عرض المزيد (${n-sh.length})</button>`:'')}
+function earlyV(){return `<h3>🔔 التنبيهات المبكرة للولادة والفطام</h3><div class="cd">${CFGE.map(([k,l,u,h])=>`<div class="fl"><label for="e_${k}">${l} (${u})</label><input id="e_${k}" type="number" inputmode="numeric" min="0" step="1" data-cfg="${k}" value="${S.cfg[k]}"><div class="mu fh" style="margin-top:6px">${esc(h)}</div><div class="mu fh" id="eh_${k}"><b>${esc(earlyHint(k,S.cfg[k]))}</b></div></div>`).join('')}<button class="btn" style="width:100%" data-act="svc">حفظ التنبيهات المبكرة</button></div>`}
 function setV(){const ts=Object.keys(S.ch).map(t=>[t,rows(t).length]);const kb=Math.round(JSON.stringify(Object.keys(S.ch).map(t=>rows(t))).length/1024);
 const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وعلى حسابك.':cur==='busy'?'جارٍ الحفظ…':cur==='loc'?'كل البيانات محفوظة على جهازك وتشتغل بدون إنترنت. خد نسخة احتياطية كل فترة وابعتها لنفسك.':'تعذّر الحفظ — نزّل نسخة احتياطية الآن.';
 return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
 <div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>${snapCard()}${autoCard()}
-${notifV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">آخر نسخة احتياطية: ${(()=>{const a=bkAge();return a?new Date(a.l).toLocaleDateString('ar-EG-u-nu-latn'):'لسه'})()}</div><div class="mu">التخزين الدائم: <span id="pst">…</span></div><div class="mu">آخر تشغيل: ${bootMs} ms${skipTotal()?` · ⚠ ${skipTotal()} سجل تالف اتخطّى عرضه`:''}</div><details class="mu"><summary>معلومات تقنية</summary><pre style="direction:ltr;white-space:pre-wrap;font-size:11px">${esc(diag.join('\n'))}</pre></details><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button><button class="btn s" data-act="rawbk">نسخة طوارئ</button></div>`}
+${notifV()}${earlyV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">آخر نسخة احتياطية: ${(()=>{const a=bkAge();return a?new Date(a.l).toLocaleDateString('ar-EG-u-nu-latn'):'لسه'})()}</div><div class="mu">التخزين الدائم: <span id="pst">…</span></div><div class="mu">آخر تشغيل: ${bootMs} ms${skipTotal()?` · ⚠ ${skipTotal()} سجل تالف اتخطّى عرضه`:''}</div><details class="mu"><summary>معلومات تقنية</summary><pre style="direction:ltr;white-space:pre-wrap;font-size:11px">${esc(diag.join('\n'))}</pre></details><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button><button class="btn s" data-act="rawbk">نسخة طوارئ</button></div>`}
 function render(){try{renderMain()}catch(e){dg('render failed: '+(e&&e.message));const m=document.getElementById('main');if(m)m.innerHTML=`<div class="er">⚠ حصلت مشكلة في عرض الشاشة دي</div><div class="cd"><b>بياناتك على الجهاز سليمة</b><div class="mu">جرّب تفتح شاشة تانية من تحت. لو المشكلة فضلت، خد نسخة طوارئ وابعت لي صورة الشاشة دي.</div><div class="mu">السبب: ${esc(String((e&&e.message)||e).slice(0,140))}</div></div><div class="acts"><button class="btn" data-act="rerender">إعادة المحاولة</button><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`}}
 function renderMain(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
 $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
@@ -403,7 +434,7 @@ del(t,id);closeSheet();toast('تم الحذف');render()}
 function quickVac(s){const[t,id,f]=s.split('|'),r=byId(t).get(id);if(!r)return;const old=r[f];put(t,{...r,[f]:todayS()});render();
 toast('تم تسجيل التحصين ✓',()=>{const c=byId(t).get(id);if(!c)return;const n={...c};if(old==null)delete n[f];else n[f]=old;put(t,n);render()})}
 function saveCfg(el){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
-if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&/Days$|Age$|Cycle$/.test(k)&&v<1)){toast('قيمة غير صالحة');return render()}
+if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&!ZOK.has(k)&&/Days$|Age$|Cycle$/.test(k)&&v<1)){toast('قيمة غير صالحة');return render()}
 if(pct)v/=100;const nc={...S.cfg,[k]:v};if(nc.PoorRatePct>nc.GoodRatePct){toast('نسبة الضعيف لازم تكون أقل من الممتاز');return render()}
 S.cfg=nc;qc();S.v++;toast('تم حفظ الإعداد ✓');render()}
 async function shareFile(name,mime,text,title){const f=new File([text],name,{type:mime});
@@ -431,10 +462,11 @@ function snapCard(){const s=hasSnap;if(!s)return'';const n=Object.values(s.count
 return `<div class="cd"><b>🛟 نسخة أمان قبل آخر استرجاع</b><div class="mu">${esc(w)} · ${n} سجل</div></div><div class="acts"><button class="btn s" data-act="rsnap">استرجاع نسخة الأمان دي</button></div>`}
 function saveAllCfg(){const nc={...S.cfg};
 for(const el of document.querySelectorAll('[data-cfg]')){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
-if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&/Days$|Age$|Cycle$/.test(k)&&v<1)){const f=CFGL.find(x=>x[0]===k);toast('قيمة غير صالحة: '+(f?f[1]:k));return}nc[k]=pct?v/100:v}
+if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&!ZOK.has(k)&&/Days$|Age$|Cycle$/.test(k)&&v<1)||(ZOK.has(k)&&!Number.isInteger(v))){const f=CFGL.find(x=>x[0]===k)||CFGE.find(x=>x[0]===k);toast('قيمة غير صالحة: '+(f?f[1]:k));return}nc[k]=pct?v/100:v}
 if(nc.PoorRatePct>nc.GoodRatePct){toast('نسبة الضعيف لازم تكون أقل من الممتاز');return}
 if(nc.MinWeanDays>nc.WeaningAge){toast('أقل مدة للفطام لازم تكون أقل من أو تساوي سن الفطام');return}
 if(nc.MaxBirthDays<nc.GestationDays){toast('أقصى مدة للولادة لازم تكون أكبر من أو تساوي مدة الحمل');return}
+if(nc.BirthAlertDays>nc.GestationDays||nc.WeanBeforeBirthDays>nc.GestationDays){toast('أيام التنبيه المبكر لازم تكون أقل من أو تساوي مدة الحمل');return}
 S.cfg=nc;qc();S.v++;toast('تم حفظ الإعدادات ✓');render()}
 async function updateApp(){toast('جارٍ التحديث…');try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.reload()}
 function doAct(a,el){if(a==='inj'){const e=document.getElementById('f_'+el.dataset.f);if(!e||e.disabled)return;e.value=e.value?'':todayS();e.dispatchEvent(new Event('change',{bubbles:true}));return}
@@ -497,7 +529,8 @@ document.addEventListener('input',e=>{const t=e.target;if(t.classList&&t.classLi
 t.closest('.ddl').querySelectorAll('.ddo').forEach(b=>{b.hidden=!!tk.length&&b.dataset.ddv!=='__new'&&!Core.searchOk({ids:b.dataset.ddv||'',rest:(b.querySelector('small')||{}).textContent||''},tk)})}});
 document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('button,label.btn')){try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}}},{passive:true});
 let qt=0;
-document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.cfg&&ZOK.has(t.dataset.cfg)){const h=document.getElementById('eh_'+t.dataset.cfg);if(h)h.innerHTML='<b>'+esc(earlyHint(t.dataset.cfg,Number(t.value)))+'</b>'}
+if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)return;syncAll();notifyDue();if(!FS)render()});
 let dayKey=todayS();setInterval(()=>{const n=todayS();if(n!==dayKey){dayKey=n;if(!FS&&ready)render()}},30000);
