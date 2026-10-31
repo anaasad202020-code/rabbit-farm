@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0c6a53"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Rabbit Farm">
 <title>Rabbit Farm</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap"></noscript>
 <style>
 :root{--bg:#f0f4f1;--sf:#fff;--ink:#14241c;--mu:#5f7066;--ln:#d9e2dc;--pr:#0c6a53;--pt:#fff;--rc:#b42626;--rb:#fbe8e8;--yc:#8f6100;--yb:#fcf1cf;--gc:#1f7a3f;--gb:#e1f3e7;--bc:#1f5f9f;--bb:#e3edf9;--oc:#b4520f;--ob:#fdebdc;--nc:#56646b;--nb:#e9eeeb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1612;--sf:#17221c;--ink:#e7f0ea;--mu:#93a99c;--ln:#2a3a31;--pr:#3dbb95;--pt:#062018;--rc:#ff8f8f;--rb:#3a1c1c;--yc:#f3c95a;--yb:#38300f;--gc:#77d497;--gb:#15301f;--bc:#8bbcf0;--bb:#15263a;--oc:#f5a06a;--ob:#38220f;--nc:#a5b5ad;--nb:#222e27}}
@@ -121,7 +121,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='28';
+const VER='29';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -468,7 +468,15 @@ if(nc.MinWeanDays>nc.WeaningAge){toast('أقل مدة للفطام لازم تك
 if(nc.MaxBirthDays<nc.GestationDays){toast('أقصى مدة للولادة لازم تكون أكبر من أو تساوي مدة الحمل');return}
 if(nc.BirthAlertDays>nc.GestationDays||nc.WeanBeforeBirthDays>nc.GestationDays){toast('أيام التنبيه المبكر لازم تكون أقل من أو تساوي مدة الحمل');return}
 S.cfg=nc;qc();S.v++;toast('تم حفظ الإعدادات ✓');render()}
-async function updateApp(){toast('جارٍ التحديث…');try{for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();for(const k of await caches.keys())await caches.delete(k)}catch(e){}location.reload()}
+async function updateApp(){toast('جارٍ التحديث…');clearTimeout(tt);
+const names=['index.html','core.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','badge-96.png'];let got;
+/* 1) download everything FIRST. If the internet is weak or off, nothing is touched and the app keeps working exactly as it is */
+try{const sig=AbortSignal.timeout?AbortSignal.timeout(25000):undefined;got=await Promise.all(names.map(async f=>{const r=await fetch(f,{cache:'reload',headers:{'x-rf-fresh':'1'},signal:sig});if(!r.ok)throw new Error(f+' '+r.status);return[f,r]}))}
+catch(e){toast('مفيش اتصال كويس بالإنترنت دلوقتي — التطبيق شغال زي ما هو، جرّب التحديث لما الشبكة تتحسن');return}
+/* 2) swap the saved copies all at once, ask the browser to look for a newer service worker, then reload from the phone's own copy */
+try{for(const k of(await caches.keys()).filter(k=>/^rf-v/.test(k))){const c=await caches.open(k);for(const[f,r]of got){await c.put(f,r.clone());if(f==='index.html')await c.put('./',r.clone())}}
+const reg=await navigator.serviceWorker.getRegistration();if(reg)await Promise.race([reg.update().catch(()=>0),new Promise(r=>setTimeout(r,8000))])}catch(e){dg('update swap failed: '+((e&&e.message)||e))}
+location.reload()}
 function doAct(a,el){if(a==='inj'){const e=document.getElementById('f_'+el.dataset.f);if(!e||e.disabled)return;e.value=e.value?'':todayS();e.dispatchEvent(new Event('change',{bubbles:true}));return}
 if(a==='newbr'){openForm('br',null,{m:el.dataset.m});return}
 if(a==='retry')return retryBoot();if(a==='reload')return location.reload();if(a==='rerender'){render();return}if(a==='rawbk')return rawBackup();if(a==='nosave'){loadErr=null;render();return}if(a==='upd')return updateApp();if(a==='svc')return saveAllCfg();if(a==='nf')return enableNotif();if(a==='nt')return notifyDue(1);if(a==='ics')return exportIcs();if(a==='shr')return shareApp();if(a==='ins')return installApp();
@@ -539,7 +547,8 @@ let errToast=false;const onErr=m=>{dg('error: '+m);if(!errToast){errToast=true;t
 addEventListener('error',e=>onErr(e&&e.message));addEventListener('unhandledrejection',e=>onErr(e&&e.reason&&e.reason.message||e.reason));
 render();setTimeout(()=>{if(!ready){slow=true;render()}},TO.slow);boot().then(()=>{if(NP()==='granted'){reg2();notifyDue()}}).catch(e=>dg('boot crashed: '+(e&&e.message)));
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>0));
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>0));
+navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.t==='rf-updated'){toast('نزلت نسخة جديدة ✓ — اقفل التطبيق وافتحه عشان تشتغل');clearTimeout(tt);tt=setTimeout(()=>{$('#toast').hidden=true},9000)}})}
 })();
 </script>
 </body>
