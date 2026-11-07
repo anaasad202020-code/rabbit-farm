@@ -107,6 +107,9 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 .ddo.sel,.ddo.nw{color:var(--pr);font-weight:700}
 .ddn{margin-top:8px}
 .dde{padding:14px;color:var(--mu);text-align:center;font-size:14px}
+/* kits by age */
+.kg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kg .fl{margin-bottom:0}
+.kt{margin-top:2px;font-size:14px;line-height:1.7}
 </style>
 </head>
 <body>
@@ -121,7 +124,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='29';
+const VER='30';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -129,12 +132,15 @@ const R2=n=>Math.round(n*100)/100,nf=n=>R2(n).toLocaleString('en-US'),money=n=>n
 const T0=()=>D(todayS());
 const NM={br:'تلقيح',does:'أم',bucks:'ذكر',sales:'عملية بيع',exp:'مصروف',cust:'زبون'};
 const TABS=[['today','اليوم','🔔'],['br','التناسل','🐇'],['an','القطيع','📋'],['acc','الحسابات','💰'],['set','الإعدادات','⚙️']];
-const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
+const SUBS={an:[['does','الأمهات'],['bucks','الذكور'],['kits','المواليد'],['vac','التحصينات']],acc:[['sum','الملخص'],['sales','المبيعات'],['exp','المصروفات'],['cust','الزباين']]};
 const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بعد التلقيح)','يوم'],['SecondTestDays','الأيام حتى الجسة الثانية','يوم'],['GestationDays','مدة الحمل','يوم'],['MaxBirthDays','أقصى مدة من التلقيح للولادة (للتحقق)','يوم'],['WeaningAge','سن الفطام (من الولادة)','يوم'],['MinWeanDays','أقل مدة بين الولادة والفطام (للتحقق)','يوم'],['RemateDays','أيام بعد الولادة لحد ما الأم تبقى جاهزة للتلقيح من جديد','يوم'],['BuckRestHours','راحة الذكر بين تلقيحتين (٠ = من غير تحقق)','ساعة'],['BacterialVaccineCycle','دورة التحصين البكتيري','يوم'],['ViralVaccineCycle','دورة التحصين الفيروسي','يوم'],['AlertWindow','نافذة التنبيه المبكر قبل الموعد','يوم'],['TargetSaleWeight','وزن البيع المستهدف','كجم'],['FirstMatingAge','سن جاهزية الأم للتلقيح الأول','يوم'],['MinAttempts','أقل عدد تلقيحات قبل التقييم','مرة'],['GoodRatePct','نسبة النجاح الممتازة','%'],['PoorRatePct','نسبة النجاح الضعيفة (للمراجعة)','%']];
 const CFGE=[['BirthAlertDays','تنبيه قبل الولادة المتوقعة بـ','يوم','هيجيلك تنبيه أصفر قبل موعد الولادة بالأيام دي، بدل ما تعرف يوم الولادة نفسه. اكتب ٠ لو مش عايز تنبيه مبكر.'],['WeanBeforeBirthDays','تنبيه فطام صغار الأم المرضعة الحامل — قبل ولادتها الجاية بـ','يوم','لو الأم لسه بترضع وانت لقّحتها من جديد: هيجيلك تنبيه تفطم صغارها لما يفضل على ولادتها الجاية الأيام دي. اكتب ٠ لإيقاف التنبيه ده.']];
 const ZOK=new Set(CFGE.map(x=>x[0]));
 const earlyHint=(k,v)=>{const G=S.cfg.GestationDays;return v>0&&isFinite(v)?'حاليًا التنبيه بيظهر يوم '+(G-v)+' من التلقيح (مدة الحمل '+G+' يوم).':'التنبيه ده متوقف دلوقتي.'};
 let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null;
+/* kits-by-age screen: the last range typed is remembered on this phone (f = from, t = to, s = sort) */
+const krLoad=()=>{try{const o=JSON.parse(localStorage.rf_kr||'null');if(o&&typeof o==='object')return{f:String(o.f==null?'':o.f).slice(0,6),t:String(o.t==null?'':o.t).slice(0,6),s:['age','m','n'].includes(o.s)?o.s:'age'}}catch(e){}return{f:'',t:'',s:'age'}};
+let kr=krLoad(),kpg=1;const krSave=()=>{try{localStorage.rf_kr=JSON.stringify(kr)}catch(e){}};
 const S={cfg:{...DEF},ch:{},v:0};for(const t in SCHEMA)S.ch[t]=[[]];
 const C={};const memo=(k,fn)=>{const e=C[k];if(e&&e.v===S.v)return e.r;const r=fn();C[k]={v:S.v,r};return r};
 const rows=t=>memo('r'+t,()=>[].concat(...S.ch[t]));
@@ -296,7 +302,7 @@ function showSheet(){$('#sheet').hidden=false;try{history.pushState({s:1},'')}ca
 function hideSheet(){$('#sheet').hidden=true;FS=null}
 function closeSheet(){if(history.state&&history.state.s)history.back();else hideSheet()}
 addEventListener('popstate',()=>{if(!$('#sheet').hidden)hideSheet()});
-const curT=()=>tab==='br'?'br':tab==='an'?sub.an:tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
+const curT=()=>tab==='br'?'br':tab==='an'?(sub.an==='kits'?null:sub.an):tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
 function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';pg=1;render();try{scrollTo(0,0)}catch(e){}}
 
 /* ---------- views ---------- */
@@ -352,6 +358,31 @@ function fillList(){const t=curT();if(!t)return;let it=t==='vac'?vacItems():memo
 if(tk.length){it=it.filter(x=>Core.searchOk(x,tk));it=Core.searchRank(it,tk)}if(flt)it=it.filter(x=>x.f&&x.f.includes(flt));
 const n=it.length,sh=it.slice(0,pg*30),base=t==='vac'?rows('does').length+rows('bucks').length:rows(t).length;
 $('#lst').innerHTML=(n?sh.map(cardHtml).join(''):`<div class="empty">${base?'مفيش نتائج مطابقة':'لسه مفيش بيانات — اضغط ＋ للإضافة'}</div>`)+(n>sh.length?`<button class="lnk" data-more="1">عرض المزيد (${n-sh.length})</button>`:'')}
+/* ---------- القطيع ← المواليد: every doe whose kits are inside an age range (days since birth) ---------- */
+const KPRE=[['0','14'],['15','30'],['31','45'],['46','60'],['61','90']];
+const KSORT=[['age','الأصغر عمرًا أولًا'],['m','رقم الأم'],['n','الأكتر عددًا']];
+const kitsW=n=>n===1?'صغير واحد':n===2?'صغيرين':n>=3&&n<=10?n+' صغار':n+' صغير';
+const ageW=n=>n===0?'اتولدوا النهاردة':'عمرهم '+Core.dys(n);
+const R1=n=>Math.round(n*10)/10;
+function kidsV(){
+return `<div class="cd"><b>🍼 المواليد حسب العمر</b><div class="mu">اكتب مدى العمر بالأيام (من تاريخ الولادة لحد النهاردة) وهيظهر لك كل أم عيالها جوه المدى ده، بعددهم وعمرهم، وتحتهم الإجمالي ومتوسط العمر.</div>
+<div class="kg" style="margin-top:10px"><div class="fl"><label for="kf">من عمر (يوم)</label><input id="kf" type="text" inputmode="numeric" autocomplete="off" maxlength="5" value="${esc(kr.f)}" placeholder="مثلًا 40"></div><div class="fl"><label for="kt">إلى عمر (يوم)</label><input id="kt" type="text" inputmode="numeric" autocomplete="off" maxlength="5" value="${esc(kr.t)}" placeholder="مثلًا 45"></div></div>
+<div class="seg" style="margin:10px 0">${KPRE.map(([a,b])=>`<button data-kr="${a}|${b}">${a} – ${b}</button>`).join('')}</div>
+<div class="fl" style="margin:0"><label for="ks">الترتيب</label><select id="ks">${KSORT.map(([k,l])=>`<option value="${k}"${kr.s===k?' selected':''}>${l}</option>`).join('')}</select></div></div><div id="kres"></div>`}
+function fillKids(){const el=$('#kres');if(!el)return;
+const rg=Core.ageRange(kr.f,kr.t);
+if(rg.err){el.innerHTML=`<div class="er">${esc(rg.err)}</div>`;return}
+if(rg.from==null){el.innerHTML=`<div class="empty">اكتب العمر في الخانتين اللي فوق، أو اختار مدى جاهز.<div class="mu">لو كتبت «من» بس هيظهر الأطفال اللي عمرهم اليوم ده بالظبط.</div></div>`;return}
+const T=T0(),L=memo('lit'+todayS(),()=>Core.litters(rows('br'),T)),R=Core.kidsIn(L,rg.from,rg.to,kr.s);
+const rt=rg.from===rg.to?'عمر '+Core.dys(rg.from):'من '+rg.from+' لـ '+Core.dys(rg.to);
+const warn=R.noCount?`<div class="warn">⚠ ${R.noCount} ولادة في المدى ده مش مسجّل ليها عدد أحياء، فمش محسوبة هنا.</div>`:'';
+if(!R.mothers){el.innerHTML=`<div class="empty">${L.length?'مفيش مواليد في المدى ده ('+esc(rt)+')':'لسه مفيش ولادات مسجّلة'}</div>${warn}`;return}
+const kp=(l,v)=>`<div class="k"><span>${l}</span><b>${v}</b></div>`;
+const card=g=>{const mu=g.items.length>1;return `<div class="cd mg"><div class="row"><b>الأم ${esc(g.m)}</b><span class="ch c-g">${kitsW(g.n)}</span></div>${g.items.map(x=>`<button class="mc k-g" data-open="br|${esc(x.id)}"><div class="row"><b>${mu?kitsW(x.n)+' · ':''}${ageW(x.age)}</b></div><div class="mu sm">ولادة <bdi dir="ltr" class="dt">${esc(F(x.bd))}</bdi>${x.b?' · الأب '+esc(x.b):''}${x.weaned?' · مفطومين'+(x.al!=null&&x.al!==x.n?' (ولدوا '+x.al+')':''):''}</div></button>`).join('')}</div>`};
+const sh=R.list.slice(0,kpg*40);
+el.innerHTML=`<div class="kt"><b>${esc(rt)}</b> · ${nf(R.mothers)} أم · ${nf(R.kits)} صغير · متوسط العمر ${R1(R.avgAge)} يوم</div>${sh.map(card).join('')}${R.list.length>sh.length?`<button class="lnk" data-kmore="1">عرض المزيد (${R.list.length-sh.length})</button>`:''}
+<h3>الإجمالي</h3><div class="kp">${kp('إجمالي المواليد',nf(R.kits))}${kp('عدد الأمهات',nf(R.mothers))}${kp('متوسط العمر',R1(R.avgAge)+' يوم')}${kp('أصغر وأكبر عمر',R.minAge===R.maxAge?R.minAge+' يوم':R.minAge+' – '+R.maxAge+' يوم')}${R.litters!==R.mothers?kp('عدد الولادات (بطون)',nf(R.litters)):''}</div>
+<div class="mu" style="margin-top:8px">العدد = المفطومين لو الفطام اتسجّل، وإلا الأحياء وقت الولادة. متوسط العمر محسوب لكل صغير (البطن الأكبر وزنها أكبر).</div>${warn}`}
 function earlyV(){return `<h3>🔔 التنبيهات المبكرة للولادة والفطام</h3><div class="cd">${CFGE.map(([k,l,u,h])=>`<div class="fl"><label for="e_${k}">${l} (${u})</label><input id="e_${k}" type="number" inputmode="numeric" min="0" step="1" data-cfg="${k}" value="${S.cfg[k]}"><div class="mu fh" style="margin-top:6px">${esc(h)}</div><div class="mu fh" id="eh_${k}"><b>${esc(earlyHint(k,S.cfg[k]))}</b></div></div>`).join('')}<button class="btn" style="width:100%" data-act="svc">حفظ التنبيهات المبكرة</button></div>`}
 function setV(){const ts=Object.keys(S.ch).map(t=>[t,rows(t).length]);const kb=Math.round(JSON.stringify(Object.keys(S.ch).map(t=>rows(t))).length/1024);
 const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وعلى حسابك.':cur==='busy'?'جارٍ الحفظ…':cur==='loc'?'كل البيانات محفوظة على جهازك وتشتغل بدون إنترنت. خد نسخة احتياطية كل فترة وابعتها لنفسك.':'تعذّر الحفظ — نزّل نسخة احتياطية الآن.';
@@ -364,7 +395,7 @@ $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===ta
 if(!ready){$('#main').innerHTML=slow?`<div class="cd"><b>التحميل بياخد وقت أطول من المعتاد…</b><div class="mu">الخطوة: ${esc(STEPN[bootStep]||bootStep)}. بياناتك سليمة، استنى شوية.</div></div><div class="acts"><button class="btn" data-act="retry">إعادة المحاولة</button><button class="btn s" data-act="reload">إعادة تحميل الصفحة</button></div><div class="acts"><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`:'<div class="empty">جارٍ التحميل…</div>';return}
 if(loadErr){$('#main').innerHTML=`<div class="er">⚠ تعذّر تحميل بياناتك من الجهاز</div><div class="cd"><b>بياناتك غالبًا لسه محفوظة</b><div class="mu">ماتمسحش بيانات المتصفح ولا تحذف التطبيق. اقفل التطبيق تمامًا وافتحه تاني.</div><div class="mu">السبب: ${esc(String(loadErr).startsWith('timeout:')?'التحميل اتأخر جدًا (الخطوة: '+(STEPN[String(loadErr).slice(8)]||String(loadErr).slice(8))+')':String(loadErr).slice(0,120))}</div></div><div class="acts"><button class="btn" data-act="retry">إعادة المحاولة</button><button class="btn s" data-act="reload">إعادة تحميل الصفحة</button></div><div class="acts"><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button><button class="btn s" data-act="nosave">كمّل بدون حفظ (مش مستحسن)</button></div>`;return}
 const t=curT();let h=SUBS[tab]?`<div class="seg">${SUBS[tab].map(([k,l])=>`<button data-sub="${k}" class="${sub[tab]===k?'on':''}">${l}</button>`).join('')}</div>`:'';
-h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):sumV();$('#main').innerHTML=h;if(t)fillList();if(tab==='set')try{navigator.storage.persisted().then(p=>{const e=$('#pst');if(e)e.textContent=p?'✓ مفعّل':'غير مفعّل — خد نسخة احتياطية بانتظام'})}catch(e){}}
+h+=tab==='today'?todayV():tab==='set'?setV():t?listShell(t):tab==='an'?kidsV():sumV();$('#main').innerHTML=h;if(t)fillList();if(tab==='an'&&!t)fillKids();if(tab==='set')try{navigator.storage.persisted().then(p=>{const e=$('#pst');if(e)e.textContent=p?'✓ مفعّل':'غير مفعّل — خد نسخة احتياطية بانتظام'})}catch(e){}}
 
 /* ---------- forms ---------- */
 function optList(t,k){if(t==='br'&&k==='m')return rows('does').filter(act).map(x=>x.c);if(t==='br'&&k==='b')return rows('bucks').filter(act).map(x=>x.c);if(t==='sales'&&k==='cu')return rows('cust').map(x=>x.c);return[]}
@@ -510,7 +541,7 @@ try{const r=await navigator.serviceWorker.ready;await r.showNotification(nt.titl
 async function exportIcs(){const ics=Core.ics(view(),S.cfg,T0());if(!ics){toast('مفيش مواعيد خلال الـ 45 يوم الجاية');return}const r=await shareFile('rabbit-farm-reminders.ics','text/calendar',ics,'مواعيد Rabbit Farm');if(r===1)toast('افتح الملف واختر «إضافة للتقويم»');else if(r===0)toast('تعذّر تجهيز الملف')}
 
 /* ---------- events ---------- */
-document.addEventListener('click',e=>{const el=e.target.closest('[data-open],[data-add],[data-sub],[data-more],[data-vac],[data-go],[data-tab],[data-act],#shx,#sv,#dl,#sheet');if(!el)return;const d=el.dataset;
+document.addEventListener('click',e=>{const el=e.target.closest('[data-open],[data-add],[data-sub],[data-more],[data-kmore],[data-kr],[data-vac],[data-go],[data-tab],[data-act],#shx,#sv,#dl,#sheet');if(!el)return;const d=el.dataset;
 if(el.id==='sheet'){if(e.target===el)closeSheet();return}
 if(el.id==='shx')return closeSheet();if(el.id==='sv')return save();
 if(el.id==='dl'){if(el.dataset.arm)return delRec();el.dataset.arm='1';el.textContent='اضغط مرة أخرى للتأكيد';setTimeout(()=>{el.dataset.arm='';el.textContent='حذف'},3000);return}
@@ -518,6 +549,8 @@ if(d.tab)return go(d.tab);
 if(d.sub){sub[tab]=d.sub;q='';flt='';pg=1;return render()}
 if(d.go){const[a,b,c]=d.go.split('|');return go(a,b,c)}
 if(d.more){pg++;return fillList()}
+if(d.kmore){kpg++;return fillKids()}
+if(d.kr){const[a,b]=d.kr.split('|');kr.f=a;kr.t=b;kpg=1;krSave();const f=$('#kf'),t=$('#kt');if(f)f.value=a;if(t)t.value=b;return fillKids()}
 if(d.add)return openForm(d.add);
 if(d.open){const[t,id]=d.open.split('|');return openForm(t,id)}
 if(d.vac)return quickVac(d.vac);
@@ -538,8 +571,10 @@ t.closest('.ddl').querySelectorAll('.ddo').forEach(b=>{b.hidden=!!tk.length&&b.d
 document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('button,label.btn')){try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}}},{passive:true});
 let qt=0;
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.cfg&&ZOK.has(t.dataset.cfg)){const h=document.getElementById('eh_'+t.dataset.cfg);if(h)h.innerHTML='<b>'+esc(earlyHint(t.dataset.cfg,Number(t.value)))+'</b>'}
-if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}else if(FS&&t.closest&&t.closest('#fm'))pv()});
-document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
+if(t.id==='q'){q=t.value;pg=1;clearTimeout(qt);qt=setTimeout(fillList,150)}
+else if(t.id==='kf'||t.id==='kt'){kr.f=($('#kf')||{}).value||'';kr.t=($('#kt')||{}).value||'';kpg=1;krSave();clearTimeout(qt);qt=setTimeout(fillKids,150)}
+else if(FS&&t.closest&&t.closest('#fm'))pv()});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='flt'){flt=t.value;pg=1;fillList()}else if(t.id==='ks'){kr.s=['age','m','n'].includes(t.value)?t.value:'age';kpg=1;krSave();fillKids()}else if(t.dataset&&t.dataset.cfg){}else if(t.id==='rf'){if(t.files&&t.files[0])pickFile(t.files[0])}else if(FS&&t.closest&&t.closest('#fm'))pv()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)return;syncAll();notifyDue();if(!FS)render()});
 let dayKey=todayS();setInterval(()=>{const n=todayS();if(n!==dayKey){dayKey=n;if(!FS&&ready)render()}},30000);
 window.RF={loss:()=>lossWarn,autoSnap,autoMeta:()=>autoMeta,rowsNow,S,put,del,go,render,openForm,save,rows,fillList,validate,items,brCheck:Core.brCheck,flow:Core.brFlow,idle:()=>!opq.size&&!replaceT.size&&!pendCfg&&!running.length&&!sch};

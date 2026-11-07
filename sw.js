@@ -1,7 +1,7 @@
 importScripts('core.js');
-/* v29 — opens instantly from the phone's own copy (no waiting for the internet), checks for a newer version quietly in the background,
+/* v30 — opens instantly from the phone's own copy (no waiting for the internet), checks for a newer version quietly in the background,
    and never leaves the app half-updated. Bump V whenever ANY file changes so every phone re-downloads the full set once. */
-const V='rf-v29',FONTS='rf-fonts',CORE=['index.html','core.js'],FILES=['./','index.html','core.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','badge-96.png'];
+const V='rf-v30',FONTS='rf-fonts',CORE=['index.html','core.js'],FILES=['./','index.html','core.js','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','badge-96.png'];
 const tmo=(ms)=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal};
 /* install: download the whole set once; index.html + core.js are mandatory (if they fail the old version simply stays), icons are best-effort */
 self.addEventListener('install',e=>{e.waitUntil((async()=>{const c=await caches.open(V);

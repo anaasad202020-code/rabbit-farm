@@ -224,6 +224,36 @@ if(/^\d{1,3}$/.test(t)&&!x.numAll){if(!(n.ids.includes(t)||n.idc.includes(t)))re
 if(!(n.all.includes(t)||n.allc.includes(t)))return false}return true}
 function searchScore(x,tk){const n=nitem(x),pw=n.prim.split(' ');let s=0;for(const k of tk){if(k.date){s+=1;continue}const t=k.t;if(pw.includes(t))s+=4;else if(pw.some(w=>w.startsWith(t)))s+=3;else if(n.prim.includes(t))s+=2;else s+=1}return s}
 function searchRank(items,tk){if(!tk.length)return items;return items.map((x,i)=>({x,i,s:searchScore(x,tk)})).sort((a,b)=>b.s-a.s||a.i-b.i).map(o=>o.x)}
+/* ---------- litters by age: every doe whose kits' age (today − birth date) falls inside a day range ---------- */
+/* one entry per recorded birth. n = how many kits that litter has NOW: the weaned count once weaning is recorded, otherwise the live births */
+function litters(br,T){const out=[];
+for(const r of br||[]){if(!r||!has(r.m))continue;const bd=D(r.bd);if(bd==null)continue;const age=T-bd;if(age<0)continue;
+const al=num(r.al),wc=num(r.wc),weaned=has(r.wd)&&wc!=null;
+out.push({id:r.id,m:r.m,b:r.b,bd,age,n:weaned?wc:al,al,wc,weaned})}
+return out}
+/* reads the two boxes the person typed: «from» blank = 0, «to» blank = same as «from» (one exact day) */
+function ageRange(f,t){const a=String(digitsNorm(f==null?'':f)).trim(),b=String(digitsNorm(t==null?'':t)).trim();
+if(!a&&!b)return{from:null,to:null};
+const ok=v=>/^\d{1,5}(\.\d+)?$/.test(v);
+if((a&&!ok(a))||(b&&!ok(b)))return{err:'اكتب العمر بالأيام كرقم صحيح (٠ أو أكبر)'};
+const lo=a?Math.round(Number(a)):0,hi=b?Math.round(Number(b)):lo;
+if(lo>36500||hi>36500)return{err:'العمر كبير جدًا — راجع الرقم'};
+if(lo>hi)return{err:'«من» لازم يكون أقل من أو يساوي «إلى»'};
+return{from:lo,to:hi}}
+const cmpCode=(x,y)=>String(x).localeCompare(String(y),'ar',{numeric:true});
+/* L = litters(...). sort: 'age' (youngest first, default), 'm' (mother code), 'n' (most kits first).
+   Returns one row per mother with her litters inside the range, plus totals. The average age is per RABBIT (a litter of 8 counts 8 times). */
+function kidsIn(L,from,to,sort){const lo=from==null?0:from,hi=to==null?Infinity:to,M=new Map();
+let kits=0,ageSum=0,lit=0,noCount=0,min=null,max=null;
+for(const x of L){if(x.age<lo||x.age>hi)continue;
+if(x.n==null){noCount++;continue}if(x.n<=0)continue;
+let g=M.get(x.m);if(!g){g={m:x.m,items:[],n:0,minAge:x.age};M.set(x.m,g)}
+g.items.push(x);g.n+=x.n;if(x.age<g.minAge)g.minAge=x.age;
+kits+=x.n;ageSum+=x.n*x.age;lit++;if(min==null||x.age<min)min=x.age;if(max==null||x.age>max)max=x.age}
+const list=[...M.values()];for(const g of list)g.items.sort((a,b)=>a.age-b.age||cmpCode(a.b,b.b));
+list.sort(sort==='m'?(a,b)=>cmpCode(a.m,b.m):sort==='n'?(a,b)=>b.n-a.n||a.minAge-b.minAge||cmpCode(a.m,b.m):(a,b)=>a.minAge-b.minAge||cmpCode(a.m,b.m));
+return{list,kits,mothers:list.length,litters:lit,avgAge:kits?ageSum/kits:null,minAge:min,maxAge:max,noCount}}
+const kidsByAge=(br,from,to,T,sort)=>kidsIn(litters(br,T),from,to,sort);
 /* ---------- plain-language status lines for the cards ---------- */
 function ago(n){n=Math.max(0,Math.round(n));return n===0?'النهاردة':n===1?'من يوم':n===2?'من يومين':n<=10?'من '+n+' أيام':'من '+n+' يوم'}
 function matingAge(r,T){const d=D(r&&r.d);if(d==null)return '';const bd=D(r.bd),wd=D(r.wd);
@@ -291,4 +321,4 @@ if(x.last==null)out.set(k,{text:'🟢 متاح للتلقيح',next:'لسه ما
 else if(x.ok)out.set(k,{text:'🟢 متاح للتلقيح',next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'g'});
 else out.set(k,{text:'⏳ بيرتاح — '+remText(x.remMs),next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'y'})}
 return out}
-return{dys,cases,cycLine,ago,matingAge,doeNow,buckNow,sinceText,searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
+return{litters,ageRange,kidsIn,kidsByAge,dys,cases,cycLine,ago,matingAge,doeNow,buckNow,sinceText,searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
