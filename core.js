@@ -13,7 +13,9 @@ sales:[['d','تاريخ البيع','date',1],['n','عدد الأرانب الم
 exp:[['d','التاريخ','date',1],['ty','النوع',['علف','فيتامينات ومكمّلات','مضادات حيوية وأدوية','تحصينات','أخرى'],1],['dt','البيان/التفاصيل','txt'],['a','المبلغ','dec',1],['nt','ملاحظات','txt']],
 cust:[['c','اسم الزبون/الجهة','txt',1],['ty','نوع الزبون',['','جزار','مطعم','تاجر','فرد','أخرى']],['ph','رقم التواصل','tel'],['nt','ملاحظات','txt']]};
 const num=v=>{if(v===''||v==null)return null;const n=Number(v);return isFinite(n)?n:null};
-const D=s=>{if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return null;const[y,m,d]=s.split('-').map(Number);if(y<1990||y>2100)return null;const t=Date.UTC(y,m-1,d),c=new Date(t);return c.getUTCMonth()===m-1&&c.getUTCDate()===d?t/864e5:null};
+const D0=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return null;const[y,m,d]=s.split('-').map(Number);if(y<1990||y>2100)return null;const t=Date.UTC(y,m-1,d),c=new Date(t);return c.getUTCMonth()===m-1&&c.getUTCDate()===d?t/864e5:null};
+/* date parsing is the hottest call (every record is parsed many times per screen): results are cached by string */
+const DC=new Map();const D=s=>{if(typeof s!=='string'||s.length!==10)return null;let v=DC.get(s);if(v!==undefined)return v;v=D0(s);if(DC.size>60000)DC.clear();DC.set(s,v);return v};
 const F=n=>n==null?'':new Date(n*864e5).toISOString().slice(0,10);
 const p2=n=>String(n).padStart(2,'0');
 const todayS=()=>{const t=new Date();return t.getFullYear()+'-'+p2(t.getMonth()+1)+'-'+p2(t.getDate())};
@@ -58,7 +60,7 @@ function kin(r,M,B){const d=M[r.m],b=B[r.b];if(!d||!b)return'';const X=d.gf||'',
 if((X&&X===r.b)||(A&&A===r.m)||(X&&X===Z)||(Y&&Y===A))return'w';return X||Y||Z||A?'ok':'n'}
 function idx(list,k){const m=Object.create(null);for(const x of list)if(x[k]!=null&&!(x[k] in m))m[x[k]]=x;return m}
 function alerts(S,c,T){const Md=idx(S.does,'c'),Bd=idx(S.bucks,'c'),{M}=stats(S.br,c);const urgent=[],soon=[],kins=[];
-for(const r of S.br){const o=calc(r,c,T);if(!o.st)continue;const k=o.st[1];
+for(const r of S.br){if(isDone(r))continue;const o=calc(r,c,T);if(!o.st)continue;const k=o.st[1];
 if(k==='r'||k==='b')urgent.push({r,o});else if(k==='y')soon.push({r,o});
 if((k==='r'||k==='y'||k==='g'||k==='b')&&kin(r,Md,Bd)==='w')kins.push({r,o})}
 const byD=(a,b)=>a.r.d<b.r.d?-1:a.r.d>b.r.d?1:0;
@@ -124,7 +126,7 @@ function dueText(A){return dueNote(A).body}
 function fold(s){const enc=new TextEncoder();let out='',len=0;for(const ch of s){const n=enc.encode(ch).length;if(len+n>75){out+='\r\n ';len=1}out+=ch;len+=n}return out}
 function ics(S,c,T){const H=45,g=Object.create(null),p2=n=>String(n).padStart(2,'0'),dt=n=>{const d=new Date(n*864e5);return d.getUTCFullYear()+p2(d.getUTCMonth()+1)+p2(d.getUTCDate())},tx=s=>String(s).replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');
 const add=(ty,title,day,who,all)=>{if(day==null||(!all&&day<T-30)||day>T+H)return;day=Math.max(day,T);const k=ty+day,e=g[k]||(g[k]={ty,title,day,w:[]});e.w.push(who)};
-for(const r of S.br){const o=calc(r,c,T);if(!o.st)continue;const w=r.m+'×'+r.b;
+for(const r of S.br){if(isDone(r))continue;const o=calc(r,c,T);if(!o.st)continue;const w=r.m+'×'+r.b;
 if(!r.r1)add('t1','🐇 جس أول',o.t1,w);
 if(r.r1===P&&!r.r2)add('t2','🐇 جس ثاني',o.t2,w);
 if(r.r1===P&&r.r2!==AB&&r.bd==null){add('ex','🍼 ولادة متوقعة',o.exp,r.m);if(c.BirthAlertDays>0)add('pb','🍼 قربت الولادة (بعد '+dys(c.BirthAlertDays)+')',o.exp-c.BirthAlertDays,r.m)}
@@ -187,7 +189,8 @@ if(wc!=null&&(chg('wc')||chg('al'))&&(al==null||wc>al))return 'عدد المفط
 return ''}
 /* ---------- who is free to mate: does (by cycle) and bucks (by hours) ---------- */
 const hmOk=v=>typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v);
-function ms(r){const d=D(r&&r.d);if(d==null)return null;const[y,m,dd]=F(d).split('-').map(Number),[h,mi]=hmOk(r.tm)?r.tm.split(':').map(Number):[12,0];return new Date(y,m-1,dd,h,mi).getTime()}
+const MC=new Map();
+function ms(r){const d=D(r&&r.d);if(d==null)return null;const key=r.d+'|'+(hmOk(r.tm)?r.tm:'');let v=MC.get(key);if(v!==undefined)return v;const[y,m,dd]=F(d).split('-').map(Number),[h,mi]=hmOk(r.tm)?r.tm.split(':').map(Number):[12,0];v=new Date(y,m-1,dd,h,mi).getTime();if(MC.size>60000)MC.clear();MC.set(key,v);return v}
 function fmtDT(t){const x=new Date(t);return x.getFullYear()+'-'+p2(x.getMonth()+1)+'-'+p2(x.getDate())+' '+p2(x.getHours())+':'+p2(x.getMinutes())}
 function remText(t){const m=Math.ceil(t/6e4);if(m<=0)return 'متاح';const h=Math.floor(m/60),mi=m%60;
 const hh=h===0?'':h===1?'ساعة':h===2?'ساعتين':h<=10?h+' ساعات':h+' ساعة',mm=mi===0?'':mi===1?'دقيقة':mi===2?'دقيقتين':mi<=10?mi+' دقايق':mi+' دقيقة';
@@ -276,7 +279,10 @@ if(r.r1===P)return{i:'🤰',t:'حامل (الجسة الأولى عشار) — �
 return{i:'🐇',t:'متلقحة '+ago(n),n:dueW(o.t1,T,'الجسة الأولى'),k}}
 /* every doe that has at least one LIVE cycle (not finished): her cycles, the cross-cycle flags and one overall severity.
    flag «wean-b»: she is nursing AND already pregnant again, and the next birth is WeanBeforeBirthDays away or closer → wean the litter now */
-function cases(S,c,T){const live=new Map();
+/* the same analysis feeds the today screen, the herd list and the filters: it is computed once per data version */
+let CC=null;
+function cases(S,c,T){const br=S.br||[],sig=JSON.stringify(c);if(CC&&CC.br===br&&CC.n===br.length&&CC.T===T&&CC.sig===sig)return CC.v;const v=cases0(S,c,T);CC={br,n:br.length,T,sig,v};return v}
+function cases0(S,c,T){const live=new Map();
 for(const r of S.br||[]){if(!r||!has(r.m)||D(r.d)==null||isDone(r))continue;const o=calc(r,c,T);if(!o.st)continue;let a=live.get(r.m);if(!a)live.set(r.m,a=[]);a.push({r,o,dd:D(r.d)})}
 const W=c.WeanBeforeBirthDays||0,out=new Map(),SV={r:2,b:2,y:1};
 for(const[m,L]of live){
@@ -312,13 +318,24 @@ else if(r.r2===AB)out.set(a.c,one('⚠️ أجهضت','جاهزة للتلقيح
 else if(r.r1===E)out.set(a.c,one('⚪ فاضية (الجسة طلعت فاضي)','جاهزة للتلقيح من جديد','n'));
 else out.set(a.c,one('⏳ متلقحة '+ago(T-L.d),'','n'))}
 return out}
+/* tags describing where each doe stands (used by the herd filters): x excluded/dead · young · ready(+first/again/empty/abort) · mated · preg · nurse · both · wean-b · urgent/soon/calm */
+function doeTags(S,c,T){const CS=cases(S,c,T),av=doeAvail(S,c,T),kd=new Map(),out=new Map();
+for(const x of av.ok)kd.set(x.a.c,x.kind);for(const x of av.hide)kd.set(x.a.c,x.kind);
+for(const a of S.does||[]){if(!a)continue;if(!act(a)){out.set(a.c,['x']);continue}
+const t=[],cs=CS.get(a.c);
+if(cs){let p=false,n=false,m=false;for(const x of cs.cyc){if(D(x.r.bd)!=null)n=true;else if(x.r.r1===P)p=true;else m=true}
+if(n)t.push('nurse');if(p)t.push('preg');if(m)t.push('mated');if(n&&p)t.push('both');if(cs.flags.length)t.push('wean-b');t.push(cs.sev==='u'?'urgent':cs.sev==='s'?'soon':'calm')}
+const k=kd.get(a.c);
+if(k==='first')t.push('ready','first');else if(k==='empty'||k==='abort'||k==='birth'){t.push('ready','again');if(k==='empty')t.push('empty');if(k==='abort')t.push('abort')}else if(k==='young')t.push('young');
+out.set(a.c,t)}
+return out}
 function sinceText(diff){const h=Math.floor(Math.max(0,diff)/36e5);return h<1?'من أقل من ساعة':h<48?'من '+h+' ساعة':'من '+Math.floor(h/24)+' يوم'}
 function buckNow(S,c,now){const cnt=new Map(),lim=now-30*864e5;
 for(const r of S.br||[]){if(!r||!has(r.b))continue;const m=ms(r);if(m!=null&&m>=lim&&m<=now+864e5)cnt.set(r.b,(cnt.get(r.b)||0)+1)}
 const out=new Map();for(const a of S.bucks||[])if(a&&!act(a))out.set(a.c,{text:String(a.s||'مستبعد'),next:'',kind:'x'});
 for(const x of buckAvail(S,c,now)){const k=x.a.c,n=cnt.get(k)||0,tail=n?' · لقّح '+(n===1?'مرة':n===2?'مرتين':n<=10?n+' مرات':n+' مرة')+' في آخر 30 يوم':'';
-if(x.last==null)out.set(k,{text:'🟢 متاح للتلقيح',next:'لسه ما لقّحش',kind:'g'});
+if(x.last==null)out.set(k,{text:'🟢 متاح للتلقيح',next:'لسه ما لقّحش',kind:'g',never:true});
 else if(x.ok)out.set(k,{text:'🟢 متاح للتلقيح',next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'g'});
 else out.set(k,{text:'⏳ بيرتاح — '+remText(x.remMs),next:'آخر تلقيح '+sinceText(now-x.last)+tail,kind:'y'})}
 return out}
-return{litters,ageRange,kidsIn,kidsByAge,dys,cases,cycLine,ago,matingAge,doeNow,buckNow,sinceText,searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
+return{doeTags,litters,ageRange,kidsIn,kidsByAge,dys,cases,cycLine,ago,matingAge,doeNow,buckNow,sinceText,searchTokens,searchOk,searchRank,searchScore,normQ,doeAvail,buckAvail,buckRestErr,remText,ms,fmtDT,dueNote,brFlow,brCheck,isDone,stageOf,DEF,CH,SCHEMA,num,D,F,todayS,uid,act,saleTotal,clean,calc,rate,empty,stats,vac,kin,alerts,custAgg,dash,pack,importCheck,dueText,ics}})();
