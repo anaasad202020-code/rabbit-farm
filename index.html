@@ -113,6 +113,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 
 .fx{margin-bottom:10px;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:4px 12px}.fx summary{font-weight:700;min-height:40px;display:flex;align-items:center;cursor:pointer}.fx .fl{margin-top:10px}.fx .btn{margin:6px 0 8px}
 .seg button small{opacity:.75;margin-inline-start:4px}.tq{margin-bottom:10px}.rc{margin:0 4px 8px;color:var(--mu);font-size:13.5px}
+html.sv,html.sv body{overscroll-behavior-y:contain}
 </style>
 </head>
 <body>
@@ -127,7 +128,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='32';
+const VER='33';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -140,7 +141,7 @@ const CFGL=[['FirstTestDays','الأيام حتى الجسة الأولى (بع�
 const CFGE=[['BirthAlertDays','تنبيه قبل الولادة المتوقعة بـ','يوم','هيجيلك تنبيه أصفر قبل موعد الولادة بالأيام دي، بدل ما تعرف يوم الولادة نفسه. اكتب ٠ لو مش عايز تنبيه مبكر.'],['WeanBeforeBirthDays','تنبيه فطام صغار الأم المرضعة الحامل — قبل ولادتها الجاية بـ','يوم','لو الأم لسه بترضع وانت لقّحتها من جديد: هيجيلك تنبيه تفطم صغارها لما يفضل على ولادتها الجاية الأيام دي. اكتب ٠ لإيقاف التنبيه ده.']];
 const ZOK=new Set(CFGE.map(x=>x[0]));
 const earlyHint=(k,v)=>{const G=S.cfg.GestationDays;return v>0&&isFinite(v)?'حاليًا التنبيه بيظهر يوم '+(G-v)+' من التلقيح (مدة الحمل '+G+' يوم).':'التنبيه ده متوقف دلوقتي.'};
-let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null,fm={},tf='',tq='',tl=20;
+let tab='today',sub={an:'does',acc:'sum'},q='',flt='',pg=1,FS=null,fm={},tf='',tq='',tl=20,tfX=0;
 /* kits-by-age screen: the last range typed is remembered on this phone (f = from, t = to, s = sort) */
 const krLoad=()=>{try{const o=JSON.parse(localStorage.rf_kr||'null');if(o&&typeof o==='object')return{f:String(o.f==null?'':o.f).slice(0,6),t:String(o.t==null?'':o.t).slice(0,6),s:['age','m','n'].includes(o.s)?o.s:'age'}}catch(e){}return{f:'',t:'',s:'age'}};
 let kr=krLoad(),kpg=1;const krSave=()=>{try{localStorage.rf_kr=JSON.stringify(kr)}catch(e){}};
@@ -178,7 +179,7 @@ const idbPut=v=>new Promise((res,rej)=>{const t=IDB.transaction('kv','readwrite'
 const idbGet=id=>new Promise((res,rej)=>{const q=IDB.transaction('kv').objectStore('kv').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
 const readRange=t=>new Promise((res,rej)=>{const q=IDB.transaction('kv').objectStore('kv').getAll(IDBKeyRange.bound(t+'-',t+'-\uffff'));q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
 const SM={ok:['✓ محفوظ','g'],busy:['… جارٍ الحفظ','y'],loc:['محفوظ على الجهاز فقط','n'],err:['⚠ تعذّر الحفظ','r']};
-function setSt(k,m){if(k==='loc'&&!IDB)k='err';cur=k;note=m||'';const p=$('#sync');p.textContent=m||SM[k][0];p.className='pill c-'+SM[k][1]}
+function setSt(k,m){if(k==='loc'&&!IDB)k='err';cur=k;note=m||'';document.documentElement.classList.toggle('sv',k==='busy');const p=$('#sync');p.textContent=m||SM[k][0];p.className='pill c-'+SM[k][1]}
 function applyDoc(d){if(d.id==='cfg'){S.cfg={...DEF,...d.cfg}}else if(S.ch[d.k]&&Number.isInteger(d.n)&&d.n>=0&&d.n<5000){const a=S.ch[d.k];while(a.length<=d.n)a.push([]);a[d.n]=Array.isArray(d.rows)?d.rows:[]}}
 const stamp=id=>{const r=Math.max(Date.now(),Math.floor(revs[id]||0)+1)+Math.random()*.5;revs[id]=r;return r};
 const noteDoc=d=>{revs[d.id]=Math.max(revs[d.id]||0,d.rev||0);const k=d.id==='cfg'?'cfg':d.k;(known[k]=known[k]||new Map()).set(d.id,d.rev)};
@@ -189,10 +190,31 @@ const sameDocs=(t,docs)=>{const k=known[t];if(!k)return docs.length===0;if(k.siz
    ALREADY ON DISK inside one IndexedDB transaction. Transactions are serialised by the browser,
    so several open tabs/windows can never overwrite each other's records. */
 const opq=new Map(),replaceT=new Map(),running=[],needSync=new Set();let pendCfg=null,sch=false,failed=false;
-const sched=()=>{if(!sch){sch=true;if(IDB&&ready&&cur!=='err')setSt('busy');queueMicrotask(flush)}};
-function recOp(t,id,op){let m=opq.get(t);if(!m){m=new Map();opq.set(t,m)}m.set(id,op);sched()}
-const qc=()=>{pendCfg={...S.cfg};sched()};
-function replaceTable(t,rs){opq.delete(t);replaceT.set(t,rs.slice());sched()}
+let slowS=0;
+const sched=()=>{if(!sch){sch=true;if(IDB&&ready&&cur!=='err')setSt('busy');clearTimeout(slowS);slowS=setTimeout(()=>{if(cur==='busy')setSt('busy','⏳ الحفظ بياخد وقت… ماتقفلش ولا تسحب للتحديث')},5000);queueMicrotask(flush)}};
+/* journal of unsaved changes (localStorage is written instantly, IndexedDB can take a while or be stuck behind another page) */
+const WID=(()=>{try{let v=sessionStorage.getItem('rf_tid');if(!v){v=Core.uid();sessionStorage.setItem('rf_tid',v)}return v}catch(e){return Core.uid()}})(),WK='rf_wal_'+WID;let walBig=false;
+function walSave(){if(walBig)return;try{const it=[];let n=0,ok=true;
+const add=(t,m)=>{if(replaceT.has(t))return;for(const[id,op]of m){if(++n>400){ok=false;return}it.push(op.k==='d'?{t,id,k:'d'}:{t,id,k:'p',r:op.r})}};
+for(const b of running)for(const[t,m]of b.ops)add(t,m);for(const[t,m]of opq)add(t,m);
+if(!ok){walBig=true;localStorage.removeItem(WK);return}
+const cfg=pendCfg||(running.find(b=>b.cfg)||{}).cfg||null;
+if(!it.length&&!cfg){localStorage.removeItem(WK);return}
+localStorage.setItem(WK,JSON.stringify({at:Date.now(),it,cfg}))}catch(e){}}
+function walReplay(){let n=0;try{const keys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('rf_wal_')===0)keys.push(k)}
+for(const k of keys){let o=null;try{o=JSON.parse(localStorage.getItem(k))}catch(e){}
+if(!o||!Array.isArray(o.it)||!(Date.now()-o.at<3*864e5)){localStorage.removeItem(k);continue}
+if(k!==WK&&Date.now()-o.at<15000)continue;
+for(const x of o.it){if(!x||typeof x.id!=='string'||!S.ch[x.t])continue;
+if(x.k==='d'){if(locate(x.t,x.id)){memDel(x.t,x.id);recOp(x.t,x.id,{k:'d'});n++}}
+else if(x.r&&typeof x.r==='object'){const r=Core.clean(x.t,x.r);r.id=x.id;memPut(x.t,r);recOp(x.t,x.id,{k:'p',r});n++}}
+if(o.cfg&&typeof o.cfg==='object'){S.cfg={...S.cfg,...o.cfg};qc()}
+if(k!==WK)localStorage.removeItem(k)}}catch(e){dg('wal replay failed: '+(e&&e.message))}
+if(n){S.v++;render();toast('استرجعت '+n+' تعديل ماكانش اتحفظ كله ✓');dg('wal replayed '+n)}}
+addEventListener('beforeunload',e=>{if(opq.size||replaceT.size||pendCfg||running.length){e.preventDefault();e.returnValue=''}});
+function recOp(t,id,op){let m=opq.get(t);if(!m){m=new Map();opq.set(t,m)}m.set(id,op);walSave();sched()}
+const qc=()=>{pendCfg={...S.cfg};walSave();sched()};
+function replaceTable(t,rs){opq.delete(t);replaceT.set(t,rs.slice());walSave();sched()}
 function memPut(t,r){const p=locate(t,r.id);if(p){S.ch[t][p[0]][p[1]]=r;return}const a=S.ch[t];let l=a[a.length-1];if(!l||l.length>=CH){l=[];a.push(l)}l.push(r)}
 function memDel(t,id){const p=locate(t,id);if(p)S.ch[t][p[0]].splice(p[1],1)}
 function reapply(t){for(const b of[...running,{ops:opq,reps:replaceT}]){if(b.reps.has(t))S.ch[t]=pack(b.reps.get(t));const o=b.ops.get(t);if(o)for(const[id,op]of o){if(op.k==='d')memDel(t,id);else memPut(t,op.r)}}}
@@ -226,7 +248,7 @@ let ch=false;for(const t of batch.foreign){S.ch[t]=saneCh(t,merged[t]);reapply(t
 if(ch){S.v++;if(!FS)render()}
 try{bc&&bc.postMessage({t:[...batch.written],c:!!batch.cfg})}catch(e){}
 lastUpdate([...batch.written],merged);dg('saved ok');
-if(!opq.size&&!replaceT.size&&!pendCfg&&!running.length){setSt('ok','✓ اتحفظ');clearTimeout(okT);okT=setTimeout(()=>{if(cur==='ok')setSt('loc')},2500)}
+if(!opq.size&&!replaceT.size&&!pendCfg&&!running.length){setSt('ok','✓ اتحفظ');clearTimeout(okT);clearTimeout(slowS);okT=setTimeout(()=>{if(cur==='ok')setSt('loc')},2500)}
 if([...batch.ops.values()].some(m=>m.size)){try{toast('تم الحفظ ✓')}catch(e){}}}
 else{dg('save FAILED: '+((err&&(err.name||err.message))||'unknown'));
 for(const t of batch.written)delete known[t];
@@ -237,6 +259,7 @@ const quota=err&&err.name==='QuotaExceededError';
 setSt('err',quota?'مساحة التخزين ممتلئة':'تعذّر الحفظ على الجهاز');
 if(!failed){failed=true;toast(quota?'⚠ مساحة تخزين الجهاز ممتلئة — خد نسخة احتياطية وفضّي مساحة':'⚠ تعذّر الحفظ على الجهاز — هحاول تاني، وخد نسخة احتياطية')}
 setTimeout(sched,4000)}
+if(!opq.size&&!replaceT.size&&!pendCfg&&!running.length)walBig=false;walSave();
 if(needSync.size){const ts=[...needSync];needSync.clear();syncTables(ts,true)}}
 const busyT=t=>opq.has(t)||replaceT.has(t)||running.some(b=>b.ops.has(t)||b.reps.has(t));
 let myRev=null,lastFull=Date.now();
@@ -288,7 +311,7 @@ if(IDB)try{autoMeta=await withT(idbGet('zz-auto-meta'),TO.snap,'snap')}catch(e){
 if(gen!==bootGen)return;
 lossWarn=null;if(IDB){const L=lastGet();if(L&&L.t){const bad=[];for(const t in L.t)if((rawCnt[t]||0)<L.t[t])bad.push({t,was:L.t[t],now:rawCnt[t]||0});if(bad.length){lossWarn=bad;dg('DATA LOWER THAN LAST SAVE: '+bad.map(x=>x.t+' '+x.was+'->'+x.now).join(', '))}}
 if(!lossWarn){const L2=L&&L.t?L:{t:{}};for(const t in S.ch)L2.t[t]=rawCnt[t]||0;L2.at=Date.now();lastSet(L2)}}
-bootStep='render';ready=true;slow=false;bootMs=Date.now()-t0;dg('boot ok '+bootMs+'ms | on disk: '+cntStr(rawCnt)+' | skipped '+skipTotal()+' | v'+VER);S.v++;render();setSt(IDB?'loc':'err');
+bootStep='render';ready=true;slow=false;bootMs=Date.now()-t0;dg('boot ok '+bootMs+'ms | on disk: '+cntStr(rawCnt)+' | skipped '+skipTotal()+' | v'+VER);S.v++;render();setSt(IDB?'loc':'err');walReplay();
 setTimeout(()=>{autoSnap()},4000)}
 async function retryBoot(){ready=false;slow=false;loadErr=null;dg('retry');render();setTimeout(()=>{if(!ready){slow=true;render()}},TO.slow);await boot()}
 async function rawBackup(){try{const db=await withT(idbOpen(),TO.open,'open');
@@ -313,14 +336,14 @@ addEventListener('popstate',()=>{if(!$('#sheet').hidden)hideSheet()});
 const curT=()=>tab==='br'?'br':tab==='an'?(sub.an==='kits'?null:sub.an):tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
 /* the screen you are on is remembered, so a pull-to-refresh, an app update or the phone reopening the page brings you back to the same tab, filter, search and scroll position (kept for 2 hours) */
 const UIK='rf_ui',UIAGE=72e5;let pendY=null,uiT=0;
-const uiSave=()=>{try{localStorage.setItem(UIK,JSON.stringify({at:Date.now(),tab,sub,tf,tq,q,flt,fm,y:Math.round(scrollY||0)}))}catch(e){}};
+const uiSave=()=>{try{localStorage.setItem(UIK,JSON.stringify({at:Date.now(),tab,sub,tf,tq,q,flt,fm,tfX,y:Math.round(scrollY||0)}))}catch(e){}};
 function uiLoad(){try{const o=JSON.parse(localStorage.getItem(UIK)||'null');if(!o||typeof o!=='object'||!(Date.now()-o.at<UIAGE))return;
 if(TABS.some(x=>x[0]===o.tab))tab=o.tab;
 for(const k of Object.keys(SUBS)){const v=o.sub&&o.sub[k];if(typeof v==='string'&&SUBS[k].some(x=>x[0]===v))sub[k]=v}
 if(typeof o.tf==='string'&&/^(p1|p2|birth|wean|inj|vac|kin|mate)?$/.test(o.tf))tf=o.tf;
 if(typeof o.tq==='string')tq=o.tq.slice(0,40);if(typeof o.q==='string')q=o.q.slice(0,40);if(typeof o.flt==='string')flt=o.flt.slice(0,6);
 if(o.fm&&typeof o.fm==='object')for(const k of Object.keys(o.fm)){const v=o.fm[k];if(/^[a-z]{1,4}$/.test(k)&&typeof v==='string'&&v.length<=60)fm[k]=v}
-if(Number.isFinite(o.y)&&o.y>0)pendY=o.y}catch(e){}}
+if(Number.isFinite(o.tfX))tfX=o.tfX;if(Number.isFinite(o.y)&&o.y>0)pendY=o.y}catch(e){}}
 addEventListener('scroll',()=>{clearTimeout(uiT);uiT=setTimeout(uiSave,200)},{passive:true});addEventListener('pagehide',uiSave);
 function keepY(y){const f=()=>{try{scrollTo(0,y)}catch(e){}};f();requestAnimationFrame(f);setTimeout(f,120)}
 function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';fm={};tl=20;pg=1;render();try{scrollTo(0,0)}catch(e){}}
@@ -348,7 +371,7 @@ let h=`<div class="hero"><small>${esc(dt)}</small><h2>${A.cu.length?A.cu.length+
 if(!rows('does').length&&!rows('bucks').length)h+=`<div class="cd" style="margin-top:14px"><b>ابدأ من هنا</b><div class="mu">1) أضف الأمهات والذكور من «القطيع».<br>2) سجّل التلقيحات من «التناسل».<br>التنبيهات هتظهر هنا تلقائيًا.</div><div class="acts"><button class="btn" data-go="an|does|">إضافة أم</button><button class="btn s" data-go="an|bucks|">إضافة ذكر</button></div></div>`;
 const all=A.cu.concat(A.cs),cn={};for(const cs of all)for(const g of caseG(cs))cn[g]=(cn[g]||0)+1;
 cn.vac=A.vacs.length;cn.kin=A.kins.length;cn.mate=A.ready.length+A.again.length;
-h+=`<h3>🎯 الإجراء المطلوب</h3><div class="seg">${TF.map(([g,l])=>`<button data-tf="${g}" class="${tf===g?'on':''}">${l}${g&&cn[g]?`<small>${cn[g]}</small>`:''}</button>`).join('')}</div><div class="tq"><input id="tq" type="search" placeholder="بحث بكود الأم أو الذكر…" value="${esc(tq)}" autocomplete="off"></div><div id="tres"></div>`;
+h+=`<h3>🎯 الإجراء المطلوب</h3><div class="seg" id="tfb">${TF.map(([g,l])=>`<button data-tf="${g}" class="${tf===g?'on':''}">${l}${g&&cn[g]?`<small>${cn[g]}</small>`:''}</button>`).join('')}</div><div class="tq"><input id="tq" type="search" placeholder="بحث بكود الأم أو الذكر…" value="${esc(tq)}" autocomplete="off"></div><div id="tres"></div>`;
 return h}
 function fillToday(){const el=$('#tres');if(!el)return;const A=TA(),tk=Core.searchTokens(tq),qok=code=>!tk.length||Core.searchOk({ids:String(code)},tk);
 const fc=L=>L.filter(cs=>qok(cs.m)&&(!tf||caseG(cs).has(tf)));
@@ -442,7 +465,7 @@ const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وع
 return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
 <div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>${snapCard()}${autoCard()}
 ${notifV()}${earlyV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">آخر نسخة احتياطية: ${(()=>{const a=bkAge();return a?new Date(a.l).toLocaleDateString('ar-EG-u-nu-latn'):'لسه'})()}</div><div class="mu">التخزين الدائم: <span id="pst">…</span></div><div class="mu">آخر تشغيل: ${bootMs} ms${skipTotal()?` · ⚠ ${skipTotal()} سجل تالف اتخطّى عرضه`:''}</div><details class="mu"><summary>معلومات تقنية</summary><pre style="direction:ltr;white-space:pre-wrap;font-size:11px">${esc(diag.join('\n'))}</pre></details><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button><button class="btn s" data-act="rawbk">نسخة طوارئ</button></div>`}
-function render(){try{renderMain();uiSave();if(pendY!=null&&ready&&!loadErr){const y=pendY;pendY=null;keepY(y)}}catch(e){dg('render failed: '+(e&&e.message));const m=document.getElementById('main');if(m)m.innerHTML=`<div class="er">⚠ حصلت مشكلة في عرض الشاشة دي</div><div class="cd"><b>بياناتك على الجهاز سليمة</b><div class="mu">جرّب تفتح شاشة تانية من تحت. لو المشكلة فضلت، خد نسخة طوارئ وابعت لي صورة الشاشة دي.</div><div class="mu">السبب: ${esc(String((e&&e.message)||e).slice(0,140))}</div></div><div class="acts"><button class="btn" data-act="rerender">إعادة المحاولة</button><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`}}
+function render(){try{const bx=$('#tfb');if(bx)tfX=bx.scrollLeft;renderMain();const b2=$('#tfb');if(b2&&tfX)b2.scrollLeft=tfX;uiSave();if(pendY!=null&&ready&&!loadErr){const y=pendY;pendY=null;keepY(y)}}catch(e){dg('render failed: '+(e&&e.message));const m=document.getElementById('main');if(m)m.innerHTML=`<div class="er">⚠ حصلت مشكلة في عرض الشاشة دي</div><div class="cd"><b>بياناتك على الجهاز سليمة</b><div class="mu">جرّب تفتح شاشة تانية من تحت. لو المشكلة فضلت، خد نسخة طوارئ وابعت لي صورة الشاشة دي.</div><div class="mu">السبب: ${esc(String((e&&e.message)||e).slice(0,140))}</div></div><div class="acts"><button class="btn" data-act="rerender">إعادة المحاولة</button><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`}}
 function renderMain(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
 $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
 if(!ready){$('#main').innerHTML=slow?`<div class="cd"><b>التحميل بياخد وقت أطول من المعتاد…</b><div class="mu">الخطوة: ${esc(STEPN[bootStep]||bootStep)}. بياناتك سليمة، استنى شوية.</div></div><div class="acts"><button class="btn" data-act="retry">إعادة المحاولة</button><button class="btn s" data-act="reload">إعادة تحميل الصفحة</button></div><div class="acts"><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`:'<div class="empty">جارٍ التحميل…</div>';return}
@@ -600,7 +623,7 @@ if(el.id==='shx')return closeSheet();if(el.id==='sv')return save();
 if(el.id==='dl'){if(el.dataset.arm)return delRec();el.dataset.arm='1';el.textContent='اضغط مرة أخرى للتأكيد';setTimeout(()=>{el.dataset.arm='';el.textContent='حذف'},3000);return}
 if(d.tab)return go(d.tab);
 if(d.sub){sub[tab]=d.sub;q='';flt='';fm={};pg=1;return render()}
-if('tf' in d){tf=d.tf;tl=20;return render()}
+if('tf' in d){tf=d.tf;tl=20;document.querySelectorAll('[data-tf]').forEach(b=>b.classList.toggle('on',b.dataset.tf===tf));fillToday();uiSave();return}
 if(d.tmore){tl+=30;return fillToday()}
 if(d.act==='fclr'){fm={};pg=1;render();const x=$('details.fx');if(x)x.open=true;return}
 if(d.go){const[a,b,c]=d.go.split('|');return go(a,b,c)}
