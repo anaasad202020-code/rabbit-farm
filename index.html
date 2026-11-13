@@ -127,7 +127,7 @@ select{appearance:none;-webkit-appearance:none;padding-left:34px;background-imag
 <script id="app">
 (()=>{
 'use strict';
-const VER='31';
+const VER='32';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -311,6 +311,18 @@ function hideSheet(){$('#sheet').hidden=true;FS=null}
 function closeSheet(){if(history.state&&history.state.s)history.back();else hideSheet()}
 addEventListener('popstate',()=>{if(!$('#sheet').hidden)hideSheet()});
 const curT=()=>tab==='br'?'br':tab==='an'?(sub.an==='kits'?null:sub.an):tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
+/* the screen you are on is remembered, so a pull-to-refresh, an app update or the phone reopening the page brings you back to the same tab, filter, search and scroll position (kept for 2 hours) */
+const UIK='rf_ui',UIAGE=72e5;let pendY=null,uiT=0;
+const uiSave=()=>{try{localStorage.setItem(UIK,JSON.stringify({at:Date.now(),tab,sub,tf,tq,q,flt,fm,y:Math.round(scrollY||0)}))}catch(e){}};
+function uiLoad(){try{const o=JSON.parse(localStorage.getItem(UIK)||'null');if(!o||typeof o!=='object'||!(Date.now()-o.at<UIAGE))return;
+if(TABS.some(x=>x[0]===o.tab))tab=o.tab;
+for(const k of Object.keys(SUBS)){const v=o.sub&&o.sub[k];if(typeof v==='string'&&SUBS[k].some(x=>x[0]===v))sub[k]=v}
+if(typeof o.tf==='string'&&/^(p1|p2|birth|wean|inj|vac|kin|mate)?$/.test(o.tf))tf=o.tf;
+if(typeof o.tq==='string')tq=o.tq.slice(0,40);if(typeof o.q==='string')q=o.q.slice(0,40);if(typeof o.flt==='string')flt=o.flt.slice(0,6);
+if(o.fm&&typeof o.fm==='object')for(const k of Object.keys(o.fm)){const v=o.fm[k];if(/^[a-z]{1,4}$/.test(k)&&typeof v==='string'&&v.length<=60)fm[k]=v}
+if(Number.isFinite(o.y)&&o.y>0)pendY=o.y}catch(e){}}
+addEventListener('scroll',()=>{clearTimeout(uiT);uiT=setTimeout(uiSave,200)},{passive:true});addEventListener('pagehide',uiSave);
+function keepY(y){const f=()=>{try{scrollTo(0,y)}catch(e){}};f();requestAnimationFrame(f);setTimeout(f,120)}
 function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';fm={};tl=20;pg=1;render();try{scrollTo(0,0)}catch(e){}}
 
 /* ---------- views ---------- */
@@ -430,7 +442,7 @@ const tx=cur==='ok'?'كل البيانات محفوظة على الجهاز وع
 return `<h3>الحفظ والنسخ الاحتياطي</h3><div class="cd"><b>${tx}</b><div class="mu">${ts.map(([t,n])=>NM[t]+': '+n).join(' · ')} · حوالي ${kb} كيلوبايت</div></div>
 <div class="acts"><button class="btn" data-act="bk">نسخة احتياطية</button><label class="btn s">استرجاع من ملف<input id="rf" type="file" accept=".json,application/json" hidden></label></div><div id="rsi"></div>${snapCard()}${autoCard()}
 ${notifV()}${earlyV()}<h3>الإعدادات</h3>${CFGL.map(([k,l,u])=>{const p=/Pct$/.test(k);return `<div class="fl"><label>${l} (${u})</label><input type="number" inputmode="decimal" min="0" step="any" data-cfg="${k}" value="${p?Math.round(S.cfg[k]*100):S.cfg[k]}"></div>`}).join('')}<button class="btn" style="width:100%;margin-bottom:10px" data-act="svc">حفظ الإعدادات</button><button class="btn s" data-act="rst">استرجاع القيم الافتراضية</button><h3>عن التطبيق</h3><div class="cd"><b>النسخة ${VER}</b><div class="mu">آخر نسخة احتياطية: ${(()=>{const a=bkAge();return a?new Date(a.l).toLocaleDateString('ar-EG-u-nu-latn'):'لسه'})()}</div><div class="mu">التخزين الدائم: <span id="pst">…</span></div><div class="mu">آخر تشغيل: ${bootMs} ms${skipTotal()?` · ⚠ ${skipTotal()} سجل تالف اتخطّى عرضه`:''}</div><details class="mu"><summary>معلومات تقنية</summary><pre style="direction:ltr;white-space:pre-wrap;font-size:11px">${esc(diag.join('\n'))}</pre></details><div class="mu">لو التطبيق مش بيظهر آخر التعديلات اضغط «تحديث التطبيق». بياناتك مش بتتمسح.</div></div><div class="acts"><button class="btn s" data-act="upd">تحديث التطبيق</button><button class="btn s" data-act="rawbk">نسخة طوارئ</button></div>`}
-function render(){try{renderMain()}catch(e){dg('render failed: '+(e&&e.message));const m=document.getElementById('main');if(m)m.innerHTML=`<div class="er">⚠ حصلت مشكلة في عرض الشاشة دي</div><div class="cd"><b>بياناتك على الجهاز سليمة</b><div class="mu">جرّب تفتح شاشة تانية من تحت. لو المشكلة فضلت، خد نسخة طوارئ وابعت لي صورة الشاشة دي.</div><div class="mu">السبب: ${esc(String((e&&e.message)||e).slice(0,140))}</div></div><div class="acts"><button class="btn" data-act="rerender">إعادة المحاولة</button><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`}}
+function render(){try{renderMain();uiSave();if(pendY!=null&&ready&&!loadErr){const y=pendY;pendY=null;keepY(y)}}catch(e){dg('render failed: '+(e&&e.message));const m=document.getElementById('main');if(m)m.innerHTML=`<div class="er">⚠ حصلت مشكلة في عرض الشاشة دي</div><div class="cd"><b>بياناتك على الجهاز سليمة</b><div class="mu">جرّب تفتح شاشة تانية من تحت. لو المشكلة فضلت، خد نسخة طوارئ وابعت لي صورة الشاشة دي.</div><div class="mu">السبب: ${esc(String((e&&e.message)||e).slice(0,140))}</div></div><div class="acts"><button class="btn" data-act="rerender">إعادة المحاولة</button><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`}}
 function renderMain(){$('#ttl').textContent=TABS.find(x=>x[0]===tab)[1];
 $('#nav').innerHTML=TABS.map(([k,l,i])=>`<button data-tab="${k}" class="${k===tab?'on':''}"><span>${i}</span>${l}</button>`).join('');
 if(!ready){$('#main').innerHTML=slow?`<div class="cd"><b>التحميل بياخد وقت أطول من المعتاد…</b><div class="mu">الخطوة: ${esc(STEPN[bootStep]||bootStep)}. بياناتك سليمة، استنى شوية.</div></div><div class="acts"><button class="btn" data-act="retry">إعادة المحاولة</button><button class="btn s" data-act="reload">إعادة تحميل الصفحة</button></div><div class="acts"><button class="btn s" data-act="rawbk">نسخة طوارئ من البيانات</button></div>`:'<div class="empty">جارٍ التحميل…</div>';return}
@@ -462,7 +474,7 @@ else inp=`<input id="${id}" type="${ty==='tel'?'tel':'text'}" value="${esc(v)}" 
 return `<div class="fl">${lb}${inp}${t==='br'?`<div class="mu fh" id="h_${k}"></div>`:''}</div>`}
 function collect(t){const o={};for(const f of SCHEMA[t]){const e=document.getElementById('f_'+f[0]);if(e)o[f[0]]=e.value}if(t==='sales'&&!o.cu){const n=document.getElementById('f_cu_new');if(n&&n.value.trim())o.cu=n.value.trim()}return o}
 const nowHM=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-function openForm(t,id,pre){const r=id?byId(t).get(id):Object.assign({},pre||{});if(id&&!r)return;if(t==='br'&&!id){r.d=r.d||todayS();r.tm=r.tm||nowHM()}FS={t,id:id||null};
+function openForm(t,id,pre){const r=id?byId(t).get(id):Object.assign({},pre||{});if(id&&!r)return;if(t==='br'&&!id){r.d=r.d||todayS();r.tm=r.tm||nowHM()}FS={t,id:id||null,y:scrollY};
 $('#sht').textContent=(id?'تعديل ':'إضافة ')+NM[t];
 $('#shb').innerHTML=`${t==='br'?'<div id="stp" class="stp"></div><div id="stn" class="stn"></div><div id="injbox"></div>':''}<div id="fm">${SCHEMA[t].map(f=>fieldHtml(t,f,r,!!id)).join('')}</div><div id="pv" class="pv"></div><div id="er" class="er"></div><div class="acts"><button class="btn" id="sv">حفظ</button>${id?'<button class="btn d" id="dl">حذف</button>':''}</div>`;
 showSheet();pv()}
@@ -498,12 +510,12 @@ return ''}
 function save(){if(!FS)return;const{t,id}=FS;const r=clean(t,{...collect(t),id:id||undefined});if(id&&(t==='does'||t==='bucks'||t==='cust')){const o0=byId(t).get(id);if(o0)r.c=o0.c}const e=validate(t,r,!id,id?byId(t).get(id):null);if(e){$('#er').textContent=e;return}
 if(t==='br'){const o0=id?byId(t).get(id):null;if(Core.isDone(r)&&!(o0&&Core.isDone(o0))&&!FS.armed){FS.armed=true;$('#er').textContent='⚠ الحفظ هيقفل الدورة دي نهائيًا — مش هتقدر تعدّل التواريخ والنتايج بعد كده (الأعداد والملاحظات بس). لو متأكد اضغط «تأكيد وقفل الدورة».';$('#sv').textContent='تأكيد وقفل الدورة';return}}
 if(t==='sales'&&r.cu&&!codes('cust')[r.cu])put('cust',clean('cust',{c:r.cu}));
-put(t,r);closeSheet();toast('تم الحفظ ✓');render()}
+const y0=FS.y!=null?FS.y:scrollY;put(t,r);closeSheet();toast('تم الحفظ ✓');render();keepY(y0)}
 function delRec(){if(!FS||!FS.id)return;const{t,id}=FS,r=byId(t).get(id);if(!r)return;let n=0;
 if(t==='does')n=rows('br').filter(x=>x.m===r.c).length;if(t==='bucks')n=rows('br').filter(x=>x.b===r.c).length;if(t==='cust')n=rows('sales').filter(x=>x.cu===r.c).length;
 if(n){$('#er').textContent=`لا يمكن الحذف لأنه مرتبط بـ ${n} سجل.`+(t==='cust'?'':' غيّر الحالة إلى «مستبعد» بدل الحذف.');return}
-del(t,id);closeSheet();toast('تم الحذف');render()}
-function quickVac(s){const[t,id,f]=s.split('|'),r=byId(t).get(id);if(!r)return;const old=r[f];put(t,{...r,[f]:todayS()});render();
+const y0=FS&&FS.y!=null?FS.y:scrollY;del(t,id);closeSheet();toast('تم الحذف');render();keepY(y0)}
+function quickVac(s){const[t,id,f]=s.split('|'),r=byId(t).get(id);if(!r)return;const old=r[f],y0=scrollY;put(t,{...r,[f]:todayS()});render();keepY(y0);
 toast('تم تسجيل التحصين ✓',()=>{const c=byId(t).get(id);if(!c)return;const n={...c};if(old==null)delete n[f];else n[f]=old;put(t,n);render()})}
 function saveCfg(el){const k=el.dataset.cfg,pct=/Pct$/.test(k);let v=Number(el.value);
 if(el.value===''||!isFinite(v)||v<0||(pct&&v>100)||(!pct&&!ZOK.has(k)&&/Days$|Age$|Cycle$/.test(k)&&v<1)){toast('قيمة غير صالحة');return render()}
@@ -625,7 +637,7 @@ let dayKey=todayS();setInterval(()=>{const n=todayS();if(n!==dayKey){dayKey=n;if
 window.RF={loss:()=>lossWarn,autoSnap,autoMeta:()=>autoMeta,rowsNow,S,put,del,go,render,openForm,save,rows,fillList,validate,items,brCheck:Core.brCheck,flow:Core.brFlow,idle:()=>!opq.size&&!replaceT.size&&!pendCfg&&!running.length&&!sch};
 let errToast=false;const onErr=m=>{dg('error: '+m);if(!errToast){errToast=true;try{toast('حصل خطأ غير متوقع — لو اتكرر ابعت صورة من الإعدادات ← معلومات تقنية')}catch(_){}}};
 addEventListener('error',e=>onErr(e&&e.message));addEventListener('unhandledrejection',e=>onErr(e&&e.reason&&e.reason.message||e.reason));
-render();setTimeout(()=>{if(!ready){slow=true;render()}},TO.slow);boot().then(()=>{if(NP()==='granted'){reg2();notifyDue()}}).catch(e=>dg('boot crashed: '+(e&&e.message)));
+uiLoad();render();setTimeout(()=>{if(!ready){slow=true;render()}},TO.slow);boot().then(()=>{if(NP()==='granted'){reg2();notifyDue()}}).catch(e=>dg('boot crashed: '+(e&&e.message)));
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>0));
 navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.t==='rf-updated'){toast('نزلت نسخة جديدة ✓ — اقفل التطبيق وافتحه عشان تشتغل');clearTimeout(tt);tt=setTimeout(()=>{$('#toast').hidden=true},9000)}})}
