@@ -128,7 +128,7 @@ html.sv,html.sv body{overscroll-behavior-y:contain}
 <script id="app">
 (()=>{
 'use strict';
-const VER='33';
+const VER='34';
 const{D,F,calc,stats,alerts,dash,vac,kin,pack,importCheck,custAgg,SCHEMA,DEF,CH,clean,saleTotal,todayS,act}=Core;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -336,7 +336,7 @@ addEventListener('popstate',()=>{if(!$('#sheet').hidden)hideSheet()});
 const curT=()=>tab==='br'?'br':tab==='an'?(sub.an==='kits'?null:sub.an):tab==='acc'&&sub.acc!=='sum'?sub.acc:null;
 /* the screen you are on is remembered, so a pull-to-refresh, an app update or the phone reopening the page brings you back to the same tab, filter, search and scroll position (kept for 2 hours) */
 const UIK='rf_ui',UIAGE=72e5;let pendY=null,uiT=0;
-const uiSave=()=>{try{localStorage.setItem(UIK,JSON.stringify({at:Date.now(),tab,sub,tf,tq,q,flt,fm,tfX,y:Math.round(scrollY||0)}))}catch(e){}};
+const uiSave=()=>{try{const bx=$('#tfb');if(bx)tfX=bx.scrollLeft;localStorage.setItem(UIK,JSON.stringify({at:Date.now(),tab,sub,tf,tq,q,flt,fm,tfX,y:Math.round(scrollY||0)}))}catch(e){}};
 function uiLoad(){try{const o=JSON.parse(localStorage.getItem(UIK)||'null');if(!o||typeof o!=='object'||!(Date.now()-o.at<UIAGE))return;
 if(TABS.some(x=>x[0]===o.tab))tab=o.tab;
 for(const k of Object.keys(SUBS)){const v=o.sub&&o.sub[k];if(typeof v==='string'&&SUBS[k].some(x=>x[0]===v))sub[k]=v}
@@ -344,7 +344,7 @@ if(typeof o.tf==='string'&&/^(p1|p2|birth|wean|inj|vac|kin|mate)?$/.test(o.tf))t
 if(typeof o.tq==='string')tq=o.tq.slice(0,40);if(typeof o.q==='string')q=o.q.slice(0,40);if(typeof o.flt==='string')flt=o.flt.slice(0,6);
 if(o.fm&&typeof o.fm==='object')for(const k of Object.keys(o.fm)){const v=o.fm[k];if(/^[a-z]{1,4}$/.test(k)&&typeof v==='string'&&v.length<=60)fm[k]=v}
 if(Number.isFinite(o.tfX))tfX=o.tfX;if(Number.isFinite(o.y)&&o.y>0)pendY=o.y}catch(e){}}
-addEventListener('scroll',()=>{clearTimeout(uiT);uiT=setTimeout(uiSave,200)},{passive:true});addEventListener('pagehide',uiSave);
+addEventListener('scroll',e=>{clearTimeout(uiT);uiT=setTimeout(uiSave,e&&e.target&&e.target.id==='tfb'?100:200)},{passive:true,capture:true});addEventListener('pagehide',uiSave);
 function keepY(y){const f=()=>{try{scrollTo(0,y)}catch(e){}};f();requestAnimationFrame(f);setTimeout(f,120)}
 function go(tb,sb,fl){tab=tb;if(sb)sub[tb]=sb;q='';flt=fl||'';fm={};tl=20;pg=1;render();try{scrollTo(0,0)}catch(e){}}
 
